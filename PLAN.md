@@ -117,7 +117,7 @@ Change **one thing at a time** and re-run the eval after each. Log every result 
     Cap it at ~6 steps. *Eval →* record score.
     *Learn:* how tool calling actually works under the hood, and why the model shouldn't do arithmetic in its head.
 11. **Tracing.** Add Langfuse: per-question steps, tokens, latency, cost. Add **avg cost per question** and **p50 latency** to your results table.
-12. **Full 150-question run** on the best config → **Y%**. Write up what helped, what didn't, and why. *Failures are good content.*
+12. **Full 150-question run** on the best config → **Y%**. Run it three times by switching `ANSWER_MODEL` (Haiku 5.5, Sonnet 5.5, Opus 5.5) and add a model-comparison table: accuracy vs cost per question. Write up what helped, what didn't, and why. *Failures are good content.*
 
 Example results table for the README (fill in your own numbers):
 
