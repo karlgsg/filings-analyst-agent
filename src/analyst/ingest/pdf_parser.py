@@ -18,7 +18,8 @@ from analyst.ingest.financebench import PDF_DIR
 def read_pages(pdf_path: Path) -> list[str]:
     """Return one string per page. Note: tables come out as loose lines of text."""
     with pymupdf.open(pdf_path) as doc:
-        return [page.get_text() for page in doc]
+        # Some PDFs contain NUL bytes, which Postgres text columns reject.
+        return [page.get_text().replace("\x00", "") for page in doc]
 
 
 def chunk_pdf(pdf_path: Path) -> list[Chunk]:
