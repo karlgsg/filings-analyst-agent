@@ -1,0 +1,744 @@
+{
+  "summary": {
+    "config": "baseline",
+    "answer_model": "claude-haiku-5-5",
+    "judge_model": "claude-haiku-5-5",
+    "run_at": "2026-11-18T21:45:37+00:00",
+    "n": 30,
+    "accuracy": 0.333,
+    "retrieval_hit_rate": 0.333,
+    "avg_cost_per_q_usd": 0.00093,
+    "total_cost_usd": 0.0299,
+    "p50_latency_s": 3.54,
+    "scored_by": {
+      "numeric": 4,
+      "judge": 11,
+      "not_found": 15
+    }
+  },
+  "results": [
+    {
+      "id": "financebench_id_00222",
+      "company": "AMD",
+      "question": "Does AMD have a reasonably healthy liquidity profile based on its quick ratio for FY22? If the quick ratio is not relevant to measure liquidity, please state that and explain why.",
+      "gold": "Yes. The quick ratio is 1.57, calculated as (cash and cash equivalents+Short term investments+Accounts receivable, net+receivables from related parties)/ (current liabilities).",
+      "answer": "**Direct answer:** I couldn't find this in the provided filings. I can't determine whether AMD has a healthy liquidity profile for FY22 from these excerpts, and I can't calculate a quick ratio.\n\n**What the excerpts contain:**\n- The only FY22 AMD material is a forward-looking statements and business overview section [AMD_2022_10K, p.4]. It has no balance sheet, current assets, current liabilities, or cash flow data.\n- The AMD_2015 excerpts cover fiscal 2015. They mention cash, marketable securities, and a secured revolving line of credit, but give no FY22 figures [AMD_2015_10K, p.3].\n- The American Express excerpt describes bank regulatory capital and liquidity rules and is not about AMD [AMERICANEXPRESS_2022_10K, p.16].\n\n**Is the quick ratio relevant?** Generally, the quick ratio (cash, marketable securities, and receivables divided by current liabilities) is a common short-term liquidity measure, so it is relevant. This is general analytical knowledge, not something the excerpts say. To assess AMD's FY22 liquidity, you would need its FY22 10-K balance sheet, specifically current assets (cash, short-term investments, receivables), inventory, and current liabilities. Inventory is excluded from the quick ratio, so the calculation would also need the inventory line.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMD_2022_10K",
+          4
+        ],
+        [
+          "AMD_2015_10K",
+          3
+        ],
+        [
+          "AMERICANEXPRESS_2022_10K",
+          16
+        ]
+      ],
+      "latency_s": 4.94,
+      "answer_cost_usd": 0.000886,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00302",
+      "company": "Pfizer",
+      "question": "Did Pfizer grow its PPNE between FY20 and FY21?",
+      "gold": "Yes, change in PPNE was positive year over year",
+      "answer": "**I couldn't find this in the provided filings.** The excerpts don't include Pfizer's property, plant and equipment, net (PPNE) balance for FY2020 or FY2021, so I can't say whether it grew.\n\nThe FY2021 10-K excerpts cover revenue by region, the segment reorganization, discontinued operations (Meridian and the Upjohn spin-off), and product-level alliance revenues. The balance sheet and PP&E note are not among them. A 10-K's consolidated balance sheet or property, plant and equipment footnote would have the two year-end figures needed for the comparison.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [],
+      "latency_s": 1.96,
+      "answer_cost_usd": 0.00076,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00382",
+      "company": "MGM Resorts",
+      "question": "Which region had the Highest EBITDAR Contribution for MGM during FY2022?",
+      "gold": "Las Vegas resorts contributed ~90% of company level EBITDAR during FY2022.",
+      "answer": "**Answer: Las Vegas Strip Resorts**, with Adjusted Property EBITDAR of about $3.14 billion ($3,142,308 thousand) in FY2022.\n\n[MGMRESORTS_2022_10K, p.41] reports the FY2022 segment figures (in thousands):\n- Las Vegas Strip Resorts: $3,142,308\n- Regional Operations: $1,294,630\n- MGM China: $(203,136)\n- Corporate and other: $(736,548)\n\nLas Vegas Strip Resorts is the highest of the three regional segments, about $1.85 billion more than Regional Operations ($3,142,308 \u2212 $1,294,630 = $1,847,678). The same table's total Adjusted EBITDAR of $3,497,254 reconciles: 3,142,308 + 1,294,630 \u2212 203,136 \u2212 736,548 = 3,497,254.\n\nThe excerpt presents these as segment Adjusted Property EBITDAR values. Corporate and other is a reconciling item rather than a region, so it is excluded from the comparison.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI identifies Las Vegas Strip Resorts as the highest EBITDAR contributing region for FY2022, matching the gold answer's Las Vegas resorts conclusion. The AI's extra numbers and explanation do not contradict the main conclusion; the gold's ~90% share figure is not explicitly stated, but the main region identification agrees.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "MGMRESORTS_2022_10K",
+          41
+        ]
+      ],
+      "latency_s": 3.03,
+      "answer_cost_usd": 0.000905,
+      "judge_cost_usd": 0.00015
+    },
+    {
+      "id": "financebench_id_00517",
+      "company": "Boeing",
+      "question": "Are there any product categories / service categories that represent more than 20% of Boeing's revenue for FY2022?",
+      "gold": "Yes. Boeing has product and service categories that represent more than 20% of Boeing's revenue for FY2022. These categories are Commercial Airplanes which comprises 39% of total revenue, Defence which comprises 35% of total revenue and Services which comprises 26% of total revenue.",
+      "answer": "**Answer:** Yes, but only at the segment level. Sales of products (83.9%) is the only product/service category above 20%. Sales of services is 16.1%, below the threshold. The excerpts don't break products or services into finer categories.\n\n**Calculation (FY2022 total revenues of $66,608M):**\n\n- Sales of products: $55,893M / $66,608M = **83.9%** [BOEING_2022_10K, p.55]\n- Sales of services: $10,715M / $66,608M = **16.1%** [BOEING_2022_10K, p.55]\n\nUsing the reportable segments as the category breakdown [BOEING_2022_10K, p.62]:\n\n- Commercial Airplanes: $25,867M / $66,608M = **38.8%** (above 20%)\n- Defense, Space & Security: $23,162M / $66,608M = **34.8%** (above 20%)\n- Global Services: $17,611M / $66,608M = **26.4%** (above 20%)\n- Boeing Capital: $199M / $66,608M = 0.3% (below 20%)\n- Unallocated items, eliminations and other: $(231)M, which is a reconciling item rather than a category\n\nThe three main segments each exceed 20%. The segment figures sum to the $66,608M total after the unallocated line.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI answers Yes and identifies the same three categories as the gold answer: Commercial Airplanes (~38.8%, gold 39%), Defense (~34.8%, gold 35%), and Global Services (~26.4%, gold Services 26%). Its main conclusion matches, though it adds a product/service split (83.9%/16.1%) and a caveat that it is segment-level, which is extra explanation rather than a contradiction.",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "BOEING_2022_10K",
+          55
+        ],
+        [
+          "BOEING_2022_10K",
+          62
+        ]
+      ],
+      "latency_s": 4.5,
+      "answer_cost_usd": 0.000975,
+      "judge_cost_usd": 0.000176
+    },
+    {
+      "id": "financebench_id_00585",
+      "company": "Boeing",
+      "question": "How does Boeing's effective tax rate in FY2022 compare to FY2021?",
+      "gold": "Effective tax rate in FY2022 was 0.62%, compared to  -14.76% in FY2021.",
+      "answer": "**Answer:** Boeing's effective tax rate fell sharply, from about a 14.8% benefit in FY2021 to about 0.6% expense in FY2022. The excerpts don't state the rates, so I calculated them from the reported pre-tax loss and income tax line.\n\n**Calculation:**\n- **FY2022:** Income tax expense of $31M on a pre-tax loss of $5,022M gives an effective rate of about 0.6% (expense on a loss). [BOEING_2022_10K, p.55]\n- **FY2021:** An income tax benefit of $743M on a pre-tax loss of $5,033M gives an effective rate of about 14.8% (benefit on a loss). [BOEING_2022_10K, p.55]\n\nThe rate therefore moved by roughly 15 percentage points, because Boeing went from recording a sizable tax benefit in 2021 to a small tax expense in 2022. The excerpts do not explain the drivers of this change, and they do not include Boeing's own reported effective tax rate or its tax note.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI's FY2022 rate of about 0.6% matches the gold 0.62%. Its FY2021 magnitude of about 14.8% matches the gold 14.76%, and it describes that rate as a tax benefit, which is consistent with the gold's negative sign. The direction of change, from a benefit in FY2021 to a small expense in FY2022, is the same as the gold's.",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "BOEING_2022_10K",
+          55
+        ]
+      ],
+      "latency_s": 4.6,
+      "answer_cost_usd": 0.001055,
+      "judge_cost_usd": 0.000411
+    },
+    {
+      "id": "financebench_id_00651",
+      "company": "Johnson & Johnson",
+      "question": "Is growth in JnJ's adjusted EPS expected to accelerate in FY2023?",
+      "gold": "No, rate of growth in adjusted EPS is expected to decelerate slightly from 3.6% in FY2022 to 3.5% in FY2023.",
+      "answer": "**Direct answer:** Yes, on a like-for-like basis. Guided FY2023 adjusted EPS growth rose from 4.0% in January to 6.0% in July. The August update shows 12.5%, but it covers a different business perimeter, so it doesn't show further like-for-like acceleration.\n\n**Explanation:**\n\n- **January 2023:** Adjusted EPS (diluted) guidance was $10.45\u2013$10.65, midpoint $10.55, a 3.0%\u20135.0% change (4.0% at midpoint) vs. prior year [JOHNSON_JOHNSON_2022Q4_EARNINGS, p.5].\n- **July 2023:** Guidance rose to $10.70\u2013$10.80, midpoint $10.75, a 5.5%\u20136.5% change (6.0% at midpoint) [JOHNSON_JOHNSON_2023Q2_EARNINGS, p.5]. The July figures include Consumer Health [JOHNSON_JOHNSON_2023_8K_dated-2023-08-30, p.6].\n- **August 2023:** Guidance excluding Consumer Health is $10.00\u2013$10.10, midpoint $10.05, a 12.0%\u201313.0% change (12.5% at midpoint) [JOHNSON_JOHNSON_2023_8K_dated-2023-08-30, p.6]. The filing says the July and August figures are not comparable, because the earlier figures reflect amounts before the Kenvue separation. The share count reduction from the exchange offer is also a factor, with a partial-year benefit of $0.28 to adjusted diluted EPS [JOHNSON_JOHNSON_2023_8K_dated-2023-08-30, p.6]. The excerpts don't provide a restated prior-year base for the August comparison, so the 12.5% should not be read as organic acceleration.\n\nAs a check, the midpoints are consistent with the prior-year base: $10.55 / 1.04 \u2248 $10.14 and $10.75 / 1.06 \u2248 $10.14, close to the reported 2022 adjusted EPS of $10.15 [JOHNSON_JOHNSON_2022Q4_EARNINGS, p.1]. The August base is not stated in the excerpts, so I can't verify it.",
+      "correct": false,
+      "method": "judge",
+      "reason": "The gold answer says adjusted EPS growth is expected to decelerate slightly (3.6% in FY2022 to 3.5% in FY2023), i.e., No. The AI answers 'Yes' that growth accelerated (4.0% to 6.0% guidance, with a 12.5% August figure), which contradicts the gold conclusion on the main answer.",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "JOHNSON_JOHNSON_2022Q4_EARNINGS",
+          5
+        ],
+        [
+          "JOHNSON_JOHNSON_2023Q2_EARNINGS",
+          5
+        ],
+        [
+          "JOHNSON_JOHNSON_2023_8K_dated-2023-08-30",
+          6
+        ],
+        [
+          "JOHNSON_JOHNSON_2022Q4_EARNINGS",
+          1
+        ]
+      ],
+      "latency_s": 6.7,
+      "answer_cost_usd": 0.001382,
+      "judge_cost_usd": 0.000192
+    },
+    {
+      "id": "financebench_id_00684",
+      "company": "Amcor",
+      "question": "Does AMCOR have an improving gross margin profile as of FY2023? If gross margin is not a useful metric for a company like this, then state that and explain why.",
+      "gold": "No. For AMCOR there has been a slight decline in gross margins by 0.8%.",
+      "answer": "**Direct answer:** I couldn't find gross margin data in the provided filings, so I can't say whether Amcor's gross margin improved in FY2023.\n\n**What the excerpts do show:** The company reports Adjusted EBIT and Adjusted EBIT margin, not gross margin. The closest margin evidence is:\n\n- **Group:** FY2023 Adjusted EBIT margin was 10.9%, which \"includes an adverse impact of approximately 90 basis points related to increased sales dollars associated with passing through higher raw material costs and general inflation\" [AMCOR_2023Q4_EARNINGS, p.2]. The prior-year group margin is not in the excerpts, so the year-over-year direction is unknown.\n- **Flexibles segment:** Adjusted EBIT / Sales fell from 13.6% in FY2022 to 12.8% in FY2023 [AMCOR_2023Q4_EARNINGS, p.3]. Calculated: 1,517 / 11,151 = 13.6%; 1,429 / 11,154 = 12.8%. That is a decline of about 80 basis points.\n\n**Is gross margin a useful metric here?** The excerpts don't say whether gross margin is useful for Amcor, and I can't assess that from outside knowledge. What the filings do show is that management evaluates performance on Adjusted EBIT and comparable constant-currency measures [AMCOR_2023Q4_EARNINGS, p.7]. They also show that raw-material pass-through inflates sales dollars and compresses margin percentages [AMCOR_2023Q4_EARNINGS, p.2]. Both points suggest that a percentage margin figure can be distorted by pass-through pricing, which limits how far any single margin trend can be read.\n\nTo answer the gross margin question, you would need the consolidated income statement (net sales, cost of sales, gross profit) for FY2022 and FY2023 from the 10-K.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMCOR_2023Q4_EARNINGS",
+          2
+        ],
+        [
+          "AMCOR_2023Q4_EARNINGS",
+          3
+        ],
+        [
+          "AMCOR_2023Q4_EARNINGS",
+          7
+        ]
+      ],
+      "latency_s": 7.28,
+      "answer_cost_usd": 0.001153,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00735",
+      "company": "PepsiCo",
+      "question": "Has Pepsico reported any materially important ongoing legal battles from FY2022 and FY2021?",
+      "gold": "No, Pepsico is not involved in material legal battles.",
+      "answer": "**Direct answer:** I couldn't find this in the provided filings.\n\nNone of the excerpts contain a legal proceedings disclosure, litigation discussion, or contingencies note for FY2021 or FY2022. The FY2022 and FY2021 10-K excerpts are cash flow statements and MD&A overview text.\n\nThe closest item is a tax matter. The FY2021 10-K says PepsiCo's mandatory transition tax liability under the TCJ Act was $2.9 billion as of December 25, 2021, payable through 2026, with about $309 million expected in 2022, and that IRS guidance could affect the amount [PEPSICO_2021_10K, p.51]. The excerpt describes this as a tax liability, not as litigation, so I would not treat it as a legal battle without the full filing's legal proceedings section (Item 3) and contingencies note.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "PEPSICO_2021_10K",
+          51
+        ]
+      ],
+      "latency_s": 2.89,
+      "answer_cost_usd": 0.000738,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00757",
+      "company": "AMD",
+      "question": "Did AMD report customer concentration in FY22?",
+      "gold": "Yes, one customer accounted for 16% of consolidated net revenue",
+      "answer": "**Answer:** I couldn't find this in the provided filings. The excerpts from AMD's FY2022 10-K do not include a customer concentration disclosure, such as a top-customer revenue percentage or a 10% customer.\n\nThe only customer concentration language in the excerpts is from the FY2015 10-K, which says that \"our top five customers accounted for approximately 68% of our net revenue during the year ended 2015\" and that Microsoft and Sony each exceeded 10% of consolidated net revenue in 2015 [AMD_2015_10K, p.10]. That data covers a different year and doesn't answer the FY22 question.\n\nThe FY2022 excerpts that do appear, [AMD_2022_10K, p.14] and [AMD_2022_10K, p.4], cover backlog, seasonality, headcount, and product overview only.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMD_2015_10K",
+          10
+        ],
+        [
+          "AMD_2022_10K",
+          14
+        ],
+        [
+          "AMD_2022_10K",
+          4
+        ]
+      ],
+      "latency_s": 2.46,
+      "answer_cost_usd": 0.000735,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00799",
+      "company": "Amcor",
+      "question": "Has AMCOR's quick ratio improved or declined between FY2023 and FY2022? If the quick ratio is not something that a financial analyst would ask about a company like this, then state that and explain why.",
+      "gold": "The quick ratio has slightly improved from 0.67 times to 0.69 times between FY 2023 and FY 2022.(3.4% jump)",
+      "answer": "**Answer: I couldn't find this in the provided filings.** The excerpts don't include a balance sheet, so the quick ratio (cash, marketable securities, and receivables divided by current liabilities, or current assets less inventory divided by current liabilities) can't be calculated for FY2023 or FY2022.\n\nQuick ratio is a standard liquidity metric that analysts commonly use for manufacturers like Amcor, so it's a reasonable question to ask. The excerpts only offer partial liquidity-related context:\n\n- **Net debt:** $6,057 million at June 30, 2023, with leverage of 3.0 times [AMCOR_2023Q4_EARNINGS, p.5]. Net debt alone doesn't tell us the current-asset or current-liability figures needed for the quick ratio.\n- **Accounts payable:** The fiscal 2023 free cash flow decline \"largely reflects higher interest payments and lower accounts payable balances\" [AMCOR_2023Q4_EARNINGS, p.5]. Lower payables would generally reduce current liabilities, but the excerpt doesn't quantify the change or give the balances.\n- **Adjusted Free Cash Flow:** $848 million in fiscal 2023 versus $1,066 million in fiscal 2022 [AMCOR_2023Q4_EARNINGS, p.5; AMCOR_2023Q4_EARNINGS, p.1]. This is a cash-flow measure, not a balance-sheet liquidity measure.\n\nTo answer the question, you would need the consolidated balance sheets from Amcor's FY2023 and FY2022 10-K filings, specifically current assets, inventories, and current liabilities.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMCOR_2023Q4_EARNINGS",
+          5
+        ]
+      ],
+      "latency_s": 4.23,
+      "answer_cost_usd": 0.001061,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00807",
+      "company": "3M",
+      "question": "Does 3M have a reasonably healthy liquidity profile based on its quick ratio for Q2 of FY2023? If the quick ratio is not relevant to measure liquidity, please state that and explain why.",
+      "gold": "No. The quick ratio for 3M was 0.96 by Jun'23 close, which needs a bit of an improvement to touch the 1x mark",
+      "answer": "**Answer: I couldn't find the data needed to calculate 3M's Q2 2023 quick ratio, so I can't say whether its liquidity is healthy on that basis.**\n\nThe quick ratio is (cash + marketable securities + receivables) \u00f7 current liabilities. The excerpts contain no balance sheet figures: no current assets, receivables, inventories, marketable securities, or current liabilities. Quick ratio is a standard liquidity measure, so it is relevant here. The excerpts simply don't provide the inputs.\n\nThe excerpts do describe qualitative liquidity conditions as of June 30, 2023:\n\n- **Commercial paper:** 3M had $1.8 billion in commercial paper outstanding at June 30, 2023, compared to none at December 31, 2022 [3M_2023Q2_10Q, p.70].\n- **Program capacity:** The commercial paper program permits up to $5 billion outstanding, with a maximum maturity of 397 days [3M_2023Q2_10Q, p.70].\n- **Credit ratings:** As of June 2023, 3M was rated A2 with a negative outlook from Moody's, and A- with CreditWatch negative from S&P Global Ratings [3M_2023Q2_10Q, p.70]. These are weaker signals than the ratings cited in the 2022 10-K, which describes an A1 Moody's rating with a stable outlook and an A+ S&P rating with CreditWatch negative [3M_2022_10K, p.37].\n- **Total debt:** Total debt at June 30, 2023 was consistent with December 31, 2022, as $1.8 billion of fixed-rate note maturities was offset by $1.8 billion of commercial paper issuance [3M_2023Q2_10Q, p.70].\n- **Management's stated position:** 3M says it \"maintains a strong liquidity profile\" and \"believes it will have continuous access to the commercial paper market\" [3M_2023Q2_10Q, p.70].\n\nThese points describe funding access and a negative trend in credit ratings, but they don't establish whether 3M's near-term assets cover its current liabilities. To assess the quick ratio, you would need the June 30, 2023 condensed consolidated balance sheet from the Q2 2023 10-Q, which isn't in the excerpts provided.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "3M_2023Q2_10Q",
+          70
+        ],
+        [
+          "3M_2022_10K",
+          37
+        ]
+      ],
+      "latency_s": 5.69,
+      "answer_cost_usd": 0.00121,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_00882",
+      "company": "PepsiCo",
+      "question": "As of May 26, 2023, what is the total amount Pepsico may borrow under its unsecured revolving credit agreements?",
+      "gold": "Total amount Pepsico may borrow under unsecured revolving credit agreements = $8,400,000,000.",
+      "answer": "**Answer: $8,400,000,000 ($8.4 billion)** in combined borrowing capacity.\n\n**Explanation:** As of May 26, 2023, PepsiCo had two new unsecured revolving credit agreements, each for $4,200,000,000:\n- The 2023 364 Day Credit Agreement, up to $4,200,000,000 [PEPSICO_2023_8K_dated-2023-05-30, p.2]\n- The 2023 Five Year Credit Agreement, up to $4,200,000,000 [PEPSICO_2023_8K_dated-2023-05-30, p.2]\n\n$4,200,000,000 + $4,200,000,000 = $8,400,000,000.\n\nThe prior $3,800,000,000 agreements dated May 27, 2022 were terminated effective May 26, 2023, and had no outstanding borrowings at termination, so they are excluded [PEPSICO_2023_8K_dated-2023-05-30, p.2].\n\nThe excerpts also say PepsiCo may increase the commitments under each agreement to up to $4,950,000,000, but only with the agreement of existing or additional lenders [PEPSICO_2023_8K_dated-2023-05-30, p.2]. That potential increase is not included in the $8.4 billion figure.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI's main answer of $8,400,000,000 ($8.4 billion) matches the gold answer exactly, and the supporting explanation (two $4.2 billion unsecured revolving agreements) is consistent with that total.",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "PEPSICO_2023_8K_dated-2023-05-30",
+          2
+        ]
+      ],
+      "latency_s": 3.01,
+      "answer_cost_usd": 0.000836,
+      "judge_cost_usd": 0.000137
+    },
+    {
+      "id": "financebench_id_00941",
+      "company": "3M",
+      "question": "Which debt securities are registered to trade on a national securities exchange under 3M's name as of Q2 of 2023?",
+      "gold": "Following debt securities registered under 3M's name are listed to trade on the New York Stock Exchange:\n-1.500% Notes due 2026 (Trading Symbol: MMM26)\n-1.750% Notes due 2030 (Trading Symbol: MMM30)\n-1.500% Notes due 2031 (Trading Symbol: MMM31)",
+      "answer": "**Answer: I couldn't find this in the provided filings.**\n\nThe excerpts don't include the cover page or Item 5 disclosure that lists securities registered under Section 12(b) of the Exchange Act for the Q2 2023 10-Q. The only exchange listing information provided is from the 2022 10-K, and it covers common stock, not debt:\n\n- \"3M's stock ticker symbol is MMM and is listed on the New York Stock Exchange, Inc. (NYSE), the Chicago Stock Exchange, Inc., and the SIX Swiss Exchange.\" [3M_2022_10K, p.18]\n\nThat passage doesn't identify any debt securities, and it comes from a different filing than the one you asked about. The Q2 2023 excerpts describe debt repayments and the revolving credit facility, but they don't say which notes are exchange-listed [3M_2023Q2_10Q, p.19]. To answer this, you would need the cover page of the 3M 2023 Q2 10-Q or the 2022 10-K's Section 12(b) table.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "3M_2022_10K",
+          18
+        ],
+        [
+          "3M_2023Q2_10Q",
+          19
+        ]
+      ],
+      "latency_s": 3.09,
+      "answer_cost_usd": 0.000918,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_01009",
+      "company": "PepsiCo",
+      "question": "What are the geographies that Pepsico primarily operates in as of FY2022?",
+      "gold": "As of FY2022, Pepsico primarily operates in the following geographies: North America, Latin America, Europe, Africa, Middle East, South Asia, Asia Pacific, Australia, New Zealand and China.",
+      "answer": "**Direct answer:** The excerpts don't identify PepsiCo's primary operating geographies for FY2022. The only broad geographic statement is that it serves customers and consumers in more than 200 countries and territories.\n\n**What the excerpts say:**\n- PepsiCo serves \"customers and consumers in more than 200 countries and territories\" [PEPSICO_2022_10K, p.32].\n- Its leadership structure includes a Chief Executive Officer, International Beverages, and Chief Commercial Officer, effective January 2022 [PEPSICO_2022_10K, p.28].\n- It also has a Chief Executive Officer, Europe, effective 2019 [PEPSICO_2022_10K, p.28].\n- The FY2022 filing notes \"continued macroeconomic and political volatility, including the deadly conflict in Ukraine\" as a challenge, but does not describe Ukraine as an operating geography [PEPSICO_2022_10K, p.32].\n\n**What the excerpts do not provide:** They don't give revenue or operating breakdowns by region, and they don't say which regions are \"primary.\" The Asia Pacific, Australia and New Zealand, and China region role appears only as a 2018\u20132020 position held by an executive, so it isn't a FY2022 reference [PEPSICO_2022_10K, p.28]. The 2021 subsidiary list shows legal entities by jurisdiction but doesn't indicate where operations are primarily concentrated [PEPSICO_2021_10K, p.528].\n\nTo answer this properly, the segment or geographic revenue disclosures from PepsiCo's FY2022 10-K would be needed.",
+      "correct": false,
+      "method": "judge",
+      "reason": "The AI says the excerpts do not identify PepsiCo's primary operating geographies for FY2022, failing to provide the gold answer's list of geographies (North America, Latin America, Europe, Africa, Middle East, South Asia, Asia Pacific, Australia, New Zealand, China). It reports the information as not found, which is an explicit incorrect condition.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "PEPSICO_2022_10K",
+          32
+        ],
+        [
+          "PEPSICO_2022_10K",
+          28
+        ],
+        [
+          "PEPSICO_2021_10K",
+          528
+        ]
+      ],
+      "latency_s": 5.06,
+      "answer_cost_usd": 0.001162,
+      "judge_cost_usd": 0.000173
+    },
+    {
+      "id": "financebench_id_01028",
+      "company": "American Express",
+      "question": "What are the geographies that American Express primarily operates in as of 2022?",
+      "gold": "United States, EMEA, APAC, and LACC",
+      "answer": "**Direct answer:** The excerpts show American Express operating primarily in the United States and in international markets, with the most significant non-U.S. billed business in the UK, the EU, Australia, Japan, Canada, and Mexico. Its card network reaches about 103 countries and territories.\n\n**Explanation:**\n- **Global network reach:** The company operates a payments network with third-party banks and institutions in approximately 103 countries and territories [AMERICANEXPRESS_2022_10K, p.6].\n- **Non-U.S. markets with significant billed business:** Jurisdictions representing a significant portion of billed business outside the United States include the UK, the EU, Australia, Japan, Canada, and Mexico [AMERICANEXPRESS_2022_10K, p.5].\n- **U.S. versus outside the U.S.:** Segment reporting considers geographic factors, primarily United States versus outside the United States [AMERICANEXPRESS_2022_10K, p.153].\n- **Legal entities:** The subsidiary list includes entities incorporated in the U.S., Mexico, Ireland, Jersey, the Netherlands, Malaysia, Japan, India, New Zealand, and the Russian Federation [AMERICANEXPRESS_2022_10K, p.252]. This shows where it has legal entities, but the excerpt does not say how much business each market generates.\n\nThe excerpts do not provide revenue or assets broken down by geography, so they cannot confirm which markets are largest by size.",
+      "correct": false,
+      "method": "judge",
+      "reason": "The gold answer identifies the geographic segments as United States, EMEA, APAC, and LACC. The AI answer instead describes primarily U.S. versus outside-U.S. operations and lists countries, never mentioning the EMEA, APAC, and LACC regions, so its main answer does not match the gold.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMERICANEXPRESS_2022_10K",
+          6
+        ],
+        [
+          "AMERICANEXPRESS_2022_10K",
+          5
+        ],
+        [
+          "AMERICANEXPRESS_2022_10K",
+          153
+        ],
+        [
+          "AMERICANEXPRESS_2022_10K",
+          252
+        ]
+      ],
+      "latency_s": 3.58,
+      "answer_cost_usd": 0.000853,
+      "judge_cost_usd": 0.000153
+    },
+    {
+      "id": "financebench_id_01079",
+      "company": "Amcor",
+      "question": "What are major acquisitions that AMCOR has done in FY2023, FY2022 and FY2021?",
+      "gold": "Amcor completed these acquisitions during FY2023:\n-100% equity interest of a flexibles manufacturing company in the Czech Republic\n- 100% equity interest in a medical device packaging manufacturing site in\nShanghai, China.\n-acquisition of a New Zealand-based leading manufacturer of state-of-the-art, automated protein\npackaging machines.",
+      "answer": "**Direct answer:** The provided excerpts identify no completed major acquisitions for FY2023, FY2022, or FY2021. The only acquisition mentioned is one announced in January 2023 that was still pending at the time of the filing.\n\n**Explanation:**\n\n- **FY2023:** The only acquisition referenced is a pending deal. On January 16, 2023, Amcor agreed to acquire a medical device packaging company based in Shanghai, China, with annual sales of about $50 million. The deal was subject to regulatory approvals and was expected to close by the end of fiscal Q3 2023 [AMCOR_2023Q2_10Q, p.32]. The excerpts do not confirm whether it closed. The Russian business sale, completed December 23, 2022 for $365 million in net cash proceeds, was a divestiture, not an acquisition [AMCOR_2023_10K, p.30].\n- **FY2022:** No acquisitions are mentioned. The excerpts only note FY2022 net sales of $14.5 billion [AMCOR_2023Q2_10Q, p.34].\n- **FY2021:** No acquisitions are mentioned.\n\nTo answer fully, you would need the acquisition or business combination notes from the FY2022 and FY2021 10-Ks, and the FY2023 10-K's acquisitions note to confirm whether the Shanghai deal closed.",
+      "correct": false,
+      "method": "judge",
+      "reason": "The gold answer lists three completed FY2023 acquisitions (Czech flexibles manufacturer, Shanghai medical device packaging site, New Zealand protein packaging machine maker). The AI instead says no completed acquisitions were found, mentions only the pending Shanghai deal, and fails to identify the Czech Republic or New Zealand acquisitions. Its main conclusion does not match the gold answer.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMCOR_2023Q2_10Q",
+          32
+        ],
+        [
+          "AMCOR_2023_10K",
+          30
+        ],
+        [
+          "AMCOR_2023Q2_10Q",
+          34
+        ]
+      ],
+      "latency_s": 3.6,
+      "answer_cost_usd": 0.000906,
+      "judge_cost_usd": 0.000179
+    },
+    {
+      "id": "financebench_id_01226",
+      "company": "3M",
+      "question": "What drove operating margin change as of FY2022 for 3M? If operating margin is not a useful metric for a company like this, then please state that and explain why.",
+      "gold": "Operating Margin for 3M in FY2022 has decreased by 1.7% primarily due to: \n-Decrease in gross Margin\n-mostly one-off charges including Combat Arms Earplugs litigation, impairment related to exiting PFAS manufacturing, costs related to exiting Russia and divestiture-related restructuring\ncharges",
+      "answer": "**Direct answer:** I couldn't find this in the provided filings. The excerpts contain no FY2022 operating margin figures and no explanation of what drove a FY2022 margin change.\n\n**What the excerpts do cover:**\n- The FY2022 10-K excerpt explains that, effective Q1 2022, 3M stopped including \"dual credit\" in its segment operating performance measure. Sales and operating income in total were unchanged, because an \"Elimination of Dual Credit\" reconciling item offset the segment-level change [3M_2022_10K, p.121]. This changes how segment profit is measured, but it is not a driver of consolidated operating margin.\n- The 2018 10-K excerpt discusses drivers of operating margin, but for 2018 versus 2017, not FY2022. Those drivers include pension service cost, strategic investments, divestiture gains, raw material sourcing, and foreign exchange [3M_2018_10K, p.30]. These cannot be used to explain FY2022.\n\n**Is operating margin a useful metric for 3M?** The excerpts suggest it is. 3M states that it \"uses operating income as one of its primary business segment performance measurement tools\" [3M_2018_10K, p.28]. One caveat from the excerpts: 3M changed its segment operating income definition in 2022 and again in 2023, so segment margins are not directly comparable across those periods without the restated figures [3M_2022_10K, p.121; 3M_2023Q2_10Q, p.52]. To explain the FY2022 margin change, you would need the FY2022 vs. FY2021 operating income and net sales figures and the MD&A discussion from the FY2022 10-K, which were not provided.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "3M_2022_10K",
+          121
+        ],
+        [
+          "3M_2018_10K",
+          30
+        ],
+        [
+          "3M_2018_10K",
+          28
+        ]
+      ],
+      "latency_s": 4.74,
+      "answer_cost_usd": 0.000922,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_01279",
+      "company": "AMD",
+      "question": "Among operations, investing, and financing activities, which brought in the most (or lost the least) cash flow for AMD in FY22?",
+      "gold": "In 2022, AMD brought in the most cashflow from Operations",
+      "answer": "**Direct answer:** I couldn't find FY22 cash flow data in the provided filings.\n\nThe excerpts come from AMD's 2015 10-K and cover fiscal years 2013 through 2015. They don't include fiscal 2022.\n\nFor reference only, the most recent year in the excerpts (FY2015) shows:\n- Operating activities: $(226) million (cash used) [AMD_2015_10K, p.60]\n- Investing activities: $147 million (cash provided) [AMD_2015_10K, p.60]\n- Financing activities: $59 million (cash provided) [AMD_2015_10K, p.60]\n\nIn FY2015, investing activities brought in the most cash, and operating activities lost the most. This does not answer the FY22 question. For FY22, you would need AMD's 2022 10-K or a filing that includes its cash flow statement.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMD_2015_10K",
+          60
+        ]
+      ],
+      "latency_s": 3.16,
+      "answer_cost_usd": 0.000803,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_01290",
+      "company": "Boeing",
+      "question": "Who are the primary customers of Boeing as of FY2022?",
+      "gold": "Boeing's primary customers as of FY2022 are a limited number of commercial airlines and the US government. The US government accounted for 40% of Boeing's total revenues in FY2022.",
+      "answer": "**Direct answer:** The provided filings don't state Boeing's primary customers for FY2022. The closest information is from the FY2018 10-K, which I can't treat as FY2022 data.\n\n**What the excerpts show:**\n\n- **FY2018 10-K (not FY2022):** The Commercial Airplanes segment sells \"principally to the commercial airline industry worldwide\" [BOEING_2018_10K, p.3]. The Defense, Space & Security segment's \"primary customer is the United States Department of Defense (U.S. DoD),\" which accounted for about 86% of that segment's 2018 revenues. Other significant customers include NASA and customers in international defense, civil, and commercial satellite markets [BOEING_2018_10K, p.3].\n- **FY2022 10-K:** The excerpt on competition refers to the commercial jet aircraft market and the airline industry, and to BDS competitors, but it doesn't identify customers [BOEING_2022_10K, p.5]. The FY2022 segment revenue table shows the segments but not customer mix [BOEING_2022_10K, p.62].\n\n**Conclusion:** Based on the provided excerpts, the most I can say is that Boeing's commercial business is oriented to airlines and its defense business to the U.S. DoD, but that comes from the FY2018 filing. To answer for FY2022, I would need the FY2022 Item 1 Business section, which describes segment customers.",
+      "correct": false,
+      "method": "judge",
+      "reason": "The AI says the provided filings don't state Boeing's FY2022 primary customers and says the information wasn't found. The gold answer identifies commercial airlines and the US government as primary customers, with the US government at 40% of FY2022 revenues. The AI does not give this main conclusion for FY2022 and only refers to FY2018 data.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "BOEING_2018_10K",
+          3
+        ],
+        [
+          "BOEING_2022_10K",
+          5
+        ],
+        [
+          "BOEING_2022_10K",
+          62
+        ]
+      ],
+      "latency_s": 4.14,
+      "answer_cost_usd": 0.000946,
+      "judge_cost_usd": 0.000159
+    },
+    {
+      "id": "financebench_id_01474",
+      "company": "PepsiCo",
+      "question": "As of FY2023Q1, why did Pepsico raise full year guidance for FY2023?",
+      "gold": "Pepsico experienced a strong start to FY2023.",
+      "answer": "**Direct answer:** PepsiCo raised its FY2023 guidance because of a strong start to the year. The CEO attributed the raise to \"our strong start to the year,\" with categories and geographies that \"remained resilient during the first quarter\" [PEPSICO_2023Q1_EARNINGS, p.1].\n\n**Details of the raise:**\n- Organic revenue growth guidance increased to 8% from 6% [PEPSICO_2023Q1_EARNINGS, p.1; p.3].\n- Core constant currency EPS growth guidance increased to 9% from 8% [PEPSICO_2023Q1_EARNINGS, p.1; p.3].\n- The implied 2023 core EPS rose to $7.27 from $7.20, a 7% increase over 2022 core EPS of $6.79 [PEPSICO_2023Q1_EARNINGS, p.3].\n\n**Q1 2023 results cited:** Organic revenue grew 14.3% and core constant currency EPS grew 18% [PEPSICO_2023Q1_EARNINGS, p.1].\n\nThe excerpts do not give further detail on the specific drivers behind the strong quarter.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI's main answer states PepsiCo raised FY2023 guidance due to a strong start to the year, matching the gold answer's core conclusion. The extra numerical details are supplementary and do not contradict the gold answer.",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "PEPSICO_2023Q1_EARNINGS",
+          1
+        ],
+        [
+          "PEPSICO_2023Q1_EARNINGS",
+          3
+        ]
+      ],
+      "latency_s": 2.76,
+      "answer_cost_usd": 0.000805,
+      "judge_cost_usd": 0.00013
+    },
+    {
+      "id": "financebench_id_01484",
+      "company": "Johnson & Johnson",
+      "question": "How did JnJ's US sales growth compare to international sales growth in FY2022?",
+      "gold": "US sales increased 3.0% vs international sales decline of 0.6%.",
+      "answer": "**Answer:** In FY2022, U.S. sales grew faster than international sales on a reported basis: U.S. sales rose 3.0%, while international sales fell 0.6%, a gap of about 3.6 percentage points.\n\n**Details:**\n- U.S. companies' sales were $48.6 billion in 2022 versus $47.2 billion in 2021, an increase of 3.0% [JOHNSON_JOHNSON_2022_10K, p.28].\n- International companies' sales were $46.4 billion in 2022 versus $46.6 billion in 2021, a decrease of 0.6% [JOHNSON_JOHNSON_2022_10K, p.28].\n- The gap is 3.0% \u2212 (\u22120.6%) = 3.6 percentage points.\n\n**Operational view:** Excluding currency, the picture reverses. For the twelve months of 2022 versus 2021, the 8-K reconciliation shows U.S. operational growth of 3.3% and international operational growth of 10.0%. Adjusted operational growth (also excluding acquisitions and divestitures) was 3.3% for the U.S. and 10.1% internationally [JOHNSON_JOHNSON_2023_8K_dated-2023-08-30, p.18]. The international decline on a reported basis is therefore mostly a currency effect, which the 10-K's currency impact of \u22124.8% for total company sales is consistent with [JOHNSON_JOHNSON_2022_10K, p.28].\n\n**Note on sources:** The 8-K reconciliation shows reported growth of 3.3% for the U.S. and (0.2)% for international, and total worldwide reported growth of 1.6%. The 10-K shows 3.0%, (0.6)% and 1.3%, respectively. I couldn't determine from the excerpts why the figures differ. The 10-K figures are the ones stated in the annual report's sales discussion, so I've used them for the headline answer.",
+      "correct": true,
+      "method": "judge",
+      "reason": "The AI's headline answer matches the gold answer: U.S. sales rose 3.0% while international sales fell 0.6% on a reported basis, as the gold states. The extra operational-view and source-discrepancy notes do not change the main conclusion.",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "JOHNSON_JOHNSON_2022_10K",
+          28
+        ],
+        [
+          "JOHNSON_JOHNSON_2023_8K_dated-2023-08-30",
+          18
+        ]
+      ],
+      "latency_s": 5.61,
+      "answer_cost_usd": 0.001234,
+      "judge_cost_usd": 0.000159
+    },
+    {
+      "id": "financebench_id_01490",
+      "company": "Johnson & Johnson",
+      "question": "What is the amount of the gain accruing to JnJ as a result of the separation of its Consumer Health business segment, as of August 30, 2023?",
+      "gold": "JnJ will make a gain of approximately $20 billion from the separation of its Consumer Health business segment.",
+      "answer": "**Answer: I couldn't find this in the provided filings.**\n\nThe excerpts don't report any gain to Johnson & Johnson from the separation of its Consumer Health business. The J&J excerpts mention the planned separation, but only as costs:\n\n- The Q2 2023 release says J&J \"intends to 'split off' Kenvue shares through an exchange offer... subject to market conditions\" [JOHNSON_JOHNSON_2023Q2_EARNINGS, p.1].\n- The separation appears as \"Consumer Health separation costs\" of $282 million in Q2 2023 and $582 million year-to-date, which are pre-tax adjustments excluded from adjusted earnings [JOHNSON_JOHNSON_2023Q2_EARNINGS, p.12] [JOHNSON_JOHNSON_2023Q2_EARNINGS, p.23].\n\nThe only gain on a consumer healthcare transaction in the excerpts is Pfizer's $8.1 billion pre-tax gain ($5.4 billion after tax) from its 2019 Consumer Healthcare joint venture with GSK [PFIZER_2021_10K, p.73]. That gain belongs to Pfizer, not J&J, and it arose from a different transaction.\n\nThe excerpts also don't include any information dated August 30, 2023. The latest J&J figures are estimates as of July 20, 2023 [JOHNSON_JOHNSON_2023Q2_EARNINGS, p.22]. A gain figure would need a filing that covers the completed separation.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "JOHNSON_JOHNSON_2023Q2_EARNINGS",
+          1
+        ],
+        [
+          "JOHNSON_JOHNSON_2023Q2_EARNINGS",
+          12
+        ],
+        [
+          "JOHNSON_JOHNSON_2023Q2_EARNINGS",
+          23
+        ],
+        [
+          "PFIZER_2021_10K",
+          73
+        ],
+        [
+          "JOHNSON_JOHNSON_2023Q2_EARNINGS",
+          22
+        ]
+      ],
+      "latency_s": 3.61,
+      "answer_cost_usd": 0.000924,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_01936",
+      "company": "Amcor",
+      "question": "What is the nature & purpose of AMCOR's restructuring liability as oF Q2 of FY2023 close?",
+      "gold": "87% of the total restructuring liability is related Employee liabilities.",
+      "answer": "**Direct answer:** I couldn't find this in the provided filings.\n\nNone of the excerpts discuss a restructuring liability. The only Q2 FY2023 material is the condensed consolidated statement of equity for the period ended December 31, 2022, which shows changes in ordinary shares, paid-in capital, retained earnings, other comprehensive income/loss, treasury shares, and noncontrolling interests, with no restructuring line item [AMCOR_2023Q2_10Q, p.9]. The other excerpts cover debt covenants, lien restrictions, indenture terms, a shareholder lawsuit, and a 2022 indenture substitution [AMCOR_2023_10K, p.141; AMCOR_2020_10K, p.137; AMCOR_2020_10K, p.103; AMCOR_2022_8K_dated-2022-07-01, p.2; AMCOR_2022_8K_dated-2022-07-01, p.4]. None of these addresses restructuring.\n\nTo answer this, the Q2 FY2023 10-Q's restructuring footnote or the related MD&A section would need to be provided.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "AMCOR_2023Q2_10Q",
+          9
+        ]
+      ],
+      "latency_s": 2.38,
+      "answer_cost_usd": 0.000828,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_02608",
+      "company": "Best Buy",
+      "question": "In agreement with the information outlined in the income statement, what is the FY2015 - FY2017 3 year average net profit margin (as a %) for Best Buy? Answer in units of percents and round to one decimal place.",
+      "gold": "2.8%",
+      "answer": "**I couldn't find the FY2015 figures in the provided filings, so I can't compute the 3-year average.**\n\nThe excerpts give FY2016 and FY2017 revenue and net earnings, but not FY2015 revenue or net earnings. The only FY2015 item is a $353 million discrete tax benefit, which doesn't give the revenue or net earnings needed for the margin [BESTBUY_2019_10K, p.27].\n\nFor the two years I can compute, using net earnings attributable to Best Buy Co., Inc. shareholders and revenue from the quarterly financial information table [BESTBUY_2017_10K, p.91]:\n\n- **FY2016:** $897M / $39,528M = **2.27%**\n- **FY2017:** $1,228M / $39,403M = **3.12%**\n\nThe two-year average of these is (2.27% + 3.12%) / 2 = 2.70%, but that is not the three-year average you asked for. A full answer would need the FY2015 income statement, which is not in the provided excerpts.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "BESTBUY_2019_10K",
+          27
+        ],
+        [
+          "BESTBUY_2017_10K",
+          91
+        ]
+      ],
+      "latency_s": 3.51,
+      "answer_cost_usd": 0.000894,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_03620",
+      "company": "PepsiCo",
+      "question": "What is the FY2022 unadjusted EBITDA less capex for PepsiCo? Define unadjusted EBITDA as unadjusted operating income + depreciation and amortization [from cash flow statement]. Answer in USD millions. Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows and the income statement.",
+      "gold": "$9068.00",
+      "answer": "**Answer: I couldn't find this in the provided filings.**\n\nThe excerpts don't include PepsiCo's FY2022 income statement, cash flow statement, or any FY2022 operating income, depreciation and amortization, or capital expenditure figures. The only PepsiCo excerpt is from the 2021 10-K, covering an unrecognized tax benefit reconciliation, operating loss carryforwards, and share-based compensation [PEPSICO_2021_10K, p.83]. None of these provide the inputs needed for unadjusted operating income + D&A \u2212 capex.\n\nThe MGM Resorts excerpts are not relevant to PepsiCo and should not be used for this calculation.\n\nTo answer, I would need PepsiCo's FY2022 10-K (or the relevant pages) showing the consolidated income statement (operating profit), the cash flow statement (depreciation and amortization, and capital spending), and ideally the FY2021 comparatives for context.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": false,
+      "citations": [
+        [
+          "PEPSICO_2021_10K",
+          83
+        ]
+      ],
+      "latency_s": 2.98,
+      "answer_cost_usd": 0.000733,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_03849",
+      "company": "MGM Resorts",
+      "question": "What is the FY2018 - FY2020 3 year average of capex as a % of revenue for MGM Resorts? Answer in units of percents and round to one decimal place. Please utilize information provided primarily within the statement of cash flows and the statement of income.",
+      "gold": "7.9%",
+      "answer": "**Direct answer:** I couldn't find this in the provided filings. The FY2019 capital expenditure figure is missing, so the three-year average can't be calculated.\n\n**What the excerpts do provide:**\n\n- **Revenues** (statement of operations):\n  - FY2018: $11,763,096K [MGMRESORTS_2020_10K, p.65]\n  - FY2019: $12,899,672K [MGMRESORTS_2020_10K, p.65]\n  - FY2020: $5,162,082K [MGMRESORTS_2020_10K, p.65]\n- **Capital expenditures** (statement of cash flows):\n  - FY2018: $(1,486,843)K, \"Capital expenditures, net of construction payable\" [MGMRESORTS_2018_10K, p.60]\n  - FY2020: $(270,579)K [MGMRESORTS_2022_10K, p.62]\n  - FY2019: not in the excerpts. The 2022 10-K cash flow statement covers only 2020\u20132022, and the 2018 10-K covers only 2016\u20132018.\n\n**Partial calculations (not the requested metric):**\n\n- FY2018: 1,486,843 / 11,763,096 = 12.6%\n- FY2020: 270,579 / 5,162,082 = 5.2%\n\nWith the FY2019 capex figure (from the MGM 2019 10-K or a filing that includes FY2019 cash flows), the three-year average could be computed as the mean of the three annual percentages.",
+      "correct": false,
+      "method": "not_found",
+      "reason": "model said the answer wasn't in the filings",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "MGMRESORTS_2020_10K",
+          65
+        ],
+        [
+          "MGMRESORTS_2018_10K",
+          60
+        ],
+        [
+          "MGMRESORTS_2022_10K",
+          62
+        ]
+      ],
+      "latency_s": 4.31,
+      "answer_cost_usd": 0.001281,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_04171",
+      "company": "MGM Resorts",
+      "question": "Basing your judgments off of the balance sheet, what is the year end FY2018 amount of accounts payable for MGM Resorts? Answer in USD millions.",
+      "gold": "$303.00",
+      "answer": "**Answer: about $302.6 million** (accounts payable at December 31, 2018).\n\nThe FY2018 consolidated balance sheet lists \"Accounts payable\" at $302,578 thousand as of December 31, 2018 [MGMRESORTS_2018_10K, p.57]. Converting from thousands to millions: $302,578K \u00f7 1,000 = $302.6 million.\n\nThe same balance sheet also lists a separate \"Construction payable\" of $311,793 thousand, which I excluded because the question asks only for accounts payable.",
+      "correct": true,
+      "method": "numeric",
+      "reason": "302.6 matches 303.0 within 2%",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "MGMRESORTS_2018_10K",
+          57
+        ]
+      ],
+      "latency_s": 1.65,
+      "answer_cost_usd": 0.000781,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_04417",
+      "company": "Best Buy",
+      "question": "What is the year end FY2019 total amount of inventories for Best Buy? Answer in USD millions. Base your judgments on the information provided primarily in the balance sheet.",
+      "gold": "$5409.00",
+      "answer": "**Direct answer: $5,409 million** in merchandise inventories at the end of fiscal 2019 (February 2, 2019).\n\nThe Best Buy fiscal 2019 Form 10-K balance sheet lists merchandise inventories of $5,409 million as of February 2, 2019, up from $5,209 million on February 3, 2018 [BESTBUY_2019_10K, p.52]. The excerpt does not label the column \"fiscal 2019\" explicitly, so I'm relying on the filing's date and title.",
+      "correct": true,
+      "method": "numeric",
+      "reason": "5409.0 matches 5409.0 within 2%",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "BESTBUY_2019_10K",
+          52
+        ]
+      ],
+      "latency_s": 2.89,
+      "answer_cost_usd": 0.000784,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_04980",
+      "company": "PepsiCo",
+      "question": "What is the FY2021 capital expenditure amount (in USD billions) for PepsiCo? Respond to the question by assuming the perspective of an investment analyst who can only use the details shown within the statement of cash flows.",
+      "gold": "$4.60",
+      "answer": "**Answer: about $4.6 billion** (reported as $4,625 million) in FY2021 capital spending.\n\nOn the consolidated statement of cash flows, \"Capital spending\" under Investing Activities is shown as $(4,625) million for 2021 [PEPSICO_2021_10K, p.63]. The parentheses mark it as a cash outflow. Converting to billions: $4,625 million \u00f7 1,000 = $4.625 billion, or about $4.6 billion when rounded to one decimal place.",
+      "correct": true,
+      "method": "numeric",
+      "reason": "4.6 matches 4.6 within 2%",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "PEPSICO_2021_10K",
+          63
+        ]
+      ],
+      "latency_s": 2.87,
+      "answer_cost_usd": 0.000718,
+      "judge_cost_usd": 0.0
+    },
+    {
+      "id": "financebench_id_10285",
+      "company": "Boeing",
+      "question": "We need to calculate a financial metric by using information only provided within the balance sheet. Please answer the following question: what is Boeing's year end FY2018 net property, plant, and equipment (in USD millions)?",
+      "gold": "$12645.00",
+      "answer": "**Answer: $12,645 million**\n\nBoeing's net property, plant and equipment at December 31, 2018 was $12,645 million. The Consolidated Statements of Financial Position list \"Property, plant and equipment, net\" at $12,645 for 2018 and $12,672 for 2017 [BOEING_2018_10K, p.52]. No calculation was needed because the figure is reported directly on the balance sheet.",
+      "correct": true,
+      "method": "numeric",
+      "reason": "12645.0 matches 12645.0 within 2%",
+      "retrieval_hit": true,
+      "citations": [
+        [
+          "BOEING_2018_10K",
+          52
+        ]
+      ],
+      "latency_s": 1.38,
+      "answer_cost_usd": 0.000643,
+      "judge_cost_usd": 0.0
+    }
+  ]
+}
