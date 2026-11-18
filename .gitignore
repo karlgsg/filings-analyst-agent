@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Data (large; re-downloadable)
+data/financebench/*
+data/raw/*
+!data/**/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
