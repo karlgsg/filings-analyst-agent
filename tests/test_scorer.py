@@ -29,3 +29,15 @@ def test_numbers_match_tolerance_and_units():
 
 def test_direct_answer_is_first_paragraph():
     assert direct_answer("\n\n**Answer: $5M**\n\nBecause...") == "**Answer: $5M**"
+
+
+def test_not_found_only_when_answer_leads_with_it():
+    from scorer import says_not_found
+
+    assert says_not_found("**Direct answer:** I couldn’t find this in the provided filings.")
+    assert says_not_found("I could not find the FY2015 figures.\n\nDetails...")
+    # A real answer that mentions a gap later must NOT be auto-failed.
+    assert not says_not_found(
+        "Amcor made three acquisitions in FY2023: A, B and C. "
+        "I could not find any FY2021 acquisitions in the indexed filings."
+    )

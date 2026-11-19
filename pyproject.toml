@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=2.10.0",
+    "langfuse>=5.2.0",
     "pgvector>=0.5.1",
     "psycopg[binary]>=3.2",
     "pymupdf>=2.1",

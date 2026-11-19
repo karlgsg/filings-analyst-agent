@@ -10,13 +10,15 @@ Run:  uv run python -m analyst.agent.loop "What was PepsiCo's FY2022 EBITDA?"
 from __future__ import annotations
 
 import argparse
+import time
 
 import anthropic
 
+from analyst import tracing
 from analyst.agent.baseline import Answer, parse_citations
 from analyst.agent.prompts import AGENT_SYSTEM, FORCE_ANSWER_NOTE
 from analyst.agent.tools import list_companies, run_tool, tool_definitions
-from analyst.config import ANSWER_MODEL
+from analyst.config import ANSWER_MODEL, cost_usd
 from analyst.db.store import connect
 
 MAX_STEPS = 6  # model calls per question
@@ -51,10 +53,74 @@ def run_agent(
     own_conn = conn is None
     conn = conn or connect()
     try:
-        return _loop(question, conn, client, max_steps)
+        with tracing.observation("agent", as_type="agent", input={"question": question}) as obs:
+            answer = _loop(question, conn, client, max_steps)
+            answer.extra["trace_id"] = tracing.current_trace_id()
+            obs.update(
+                output={"answer": answer.text, "citations": answer.citations},
+                metadata={k: answer.extra[k] for k in ("steps", "finished_by")},
+            )
+        return answer
     finally:
         if own_conn:
             conn.close()
+
+
+def _call_model(client, request: dict, step: int, log: list[dict]):
+    """One Claude call, traced as a Langfuse 'generation' and timed locally."""
+    with tracing.observation(
+        f"claude step {step}",
+        as_type="generation",
+        model=request["model"],
+        input=request["messages"][-1]["content"],  # just the newest turn, not the whole history
+    ) as gen:
+        start = time.perf_counter()
+        response = client.messages.create(**request)
+        seconds = time.perf_counter() - start
+
+        u = response.usage
+        tokens = {
+            "input": u.input_tokens,
+            "output": u.output_tokens,
+            "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0,
+            "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0,
+        }
+        cost = cost_usd(
+            request["model"],
+            tokens["input"],
+            tokens["output"],
+            tokens["cache_write"],
+            tokens["cache_read"],
+        )
+        gen.update(
+            output=tracing.blocks_for_log(response.content),
+            usage_details=tokens,
+            cost_details={"total": cost},
+            metadata={"stop_reason": response.stop_reason},
+        )
+    log.append(
+        {"step": step, "kind": "llm", "seconds": round(seconds, 3), **tokens, "cost_usd": cost}
+    )
+    return response, tokens
+
+
+def _run_tool_traced(block, conn, step: int, log: list[dict]):
+    """One tool call, traced as a Langfuse span and timed locally."""
+    as_type = "retriever" if block.name == "search_filings" else "tool"
+    with tracing.observation(block.name, as_type=as_type, input=block.input) as span:
+        start = time.perf_counter()
+        output, hits, is_error = run_tool(block.name, block.input, conn)
+        seconds = time.perf_counter() - start
+        span.update(
+            output=[
+                {"page": h.label, "score": round(h.score, 3), "preview": h.text[:300]} for h in hits
+            ]
+            if hits
+            else output,
+            level="ERROR" if is_error else None,
+        )
+    log.append({"step": step, "kind": block.name, "seconds": round(seconds, 3)})
+    return output, hits, is_error
 
 
 def _loop(question, conn, client, max_steps) -> Answer:
@@ -63,7 +129,8 @@ def _loop(question, conn, client, max_steps) -> Answer:
     messages: list[dict] = [{"role": "user", "content": question}]
 
     usage = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
-    trace: list[dict] = []
+    trace: list[dict] = []  # what the agent did (tools + inputs + outputs)
+    timings: list[dict] = []  # how long each model call / tool call took
     retrieved = {}  # hit id -> Hit, across all searches
     final_text, citations, finished_by = "", [], "step_limit"
 
@@ -82,12 +149,9 @@ def _loop(question, conn, client, max_steps) -> Answer:
         if step == max_steps:
             request["tool_choice"] = {"type": "none"}  # last step: must answer in text
 
-        response = client.messages.create(**request)
-        u = response.usage
-        usage["input"] += u.input_tokens
-        usage["output"] += u.output_tokens
-        usage["cache_write"] += getattr(u, "cache_creation_input_tokens", 0) or 0
-        usage["cache_read"] += getattr(u, "cache_read_input_tokens", 0) or 0
+        response, tokens = _call_model(client, request, step, timings)
+        for key, value in tokens.items():
+            usage[key] += value
 
         # Append the full content (including thinking blocks) unchanged.
         messages.append({"role": "assistant", "content": response.content})
@@ -113,7 +177,7 @@ def _loop(question, conn, client, max_steps) -> Answer:
         # Run every requested tool and send all results back in ONE user message.
         results = []
         for block in tool_uses:
-            output, hits, is_error = run_tool(block.name, block.input, conn)
+            output, hits, is_error = _run_tool_traced(block, conn, step, timings)
             for h in hits:
                 retrieved.setdefault(h.id, h)
             trace.append(
@@ -144,7 +208,7 @@ def _loop(question, conn, client, max_steps) -> Answer:
         output_tokens=usage["output"],
         cache_write_tokens=usage["cache_write"],
         cache_read_tokens=usage["cache_read"],
-        extra={"steps": step, "finished_by": finished_by, "trace": trace},
+        extra={"steps": step, "finished_by": finished_by, "trace": trace, "timings": timings},
     )
 
 
@@ -158,11 +222,18 @@ def main() -> None:
         if "output" in t:
             print(f"   -> {t['output']}")
     print("\n" + a.text)
+    print("\nTimings:")
+    for t in a.extra["timings"]:
+        print(f"  step {t['step']} {t['kind']:15s} {t['seconds']:6.2f}s")
     print(
         f"\n{a.extra['steps']} steps, finished by {a.extra['finished_by']}; tokens: "
         f"{a.input_tokens} in, {a.cache_read_tokens} cache-read, "
         f"{a.cache_write_tokens} cache-write, {a.output_tokens} out"
     )
+    url = tracing.trace_url(a.extra.get("trace_id"))
+    if url:
+        print(f"Trace: {url}")
+    tracing.flush()
 
 
 if __name__ == "__main__":

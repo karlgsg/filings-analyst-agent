@@ -14,8 +14,8 @@
     "p50_latency_s": 3.79,
     "scored_by": {
       "numeric": 5,
-      "judge": 13,
-      "not_found": 12
+      "judge": 14,
+      "not_found": 11
     }
   },
   "results": [
@@ -382,8 +382,8 @@
       "gold": "Amcor completed these acquisitions during FY2023:\n-100% equity interest of a flexibles manufacturing company in the Czech Republic\n- 100% equity interest in a medical device packaging manufacturing site in\nShanghai, China.\n-acquisition of a New Zealand-based leading manufacturer of state-of-the-art, automated protein\npackaging machines.",
       "answer": "**Direct answer:** The excerpts show only FY2023 acquisition activity, and even that lacks detail. Amcor completed three bolt-on acquisitions in fiscal 2023, but the filings provided don't name them or give their prices. I couldn't find any FY2022 or FY2021 acquisitions in the provided filings.\n\n**Explanation:**\n\n- **FY2023:** The Q4 earnings release says that during fiscal 2023 the company \"completing three bolt-on acquisitions\" [AMCOR_2023Q4_EARNINGS, p.2]. Separately, in January 2023 Amcor agreed to acquire a medical device packaging company based in Shanghai with annual sales of about $50 million, expected to close by the end of Q3 fiscal 2023 [AMCOR_2023Q2_10Q, p.32]. The excerpts don't confirm whether that deal closed.\n- **FY2022:** I couldn't find any acquisitions in the provided filings. The FY2022 references are to sales of $14.5 billion [AMCOR_2023Q2_10Q, p.34] and the Russian business sale, which was a divestiture, not an acquisition [AMCOR_2023_10K, p.30].\n- **FY2021:** I couldn't find any acquisitions in the provided filings.\n- **Outside the requested period:** The Bemis Company merger, completed June 11, 2019, is the major acquisition in the excerpts, but it falls in fiscal 2019 [AMCOR_2020_10K, p.6].",
       "correct": false,
-      "method": "not_found",
-      "reason": "model said the answer wasn't in the filings",
+      "method": "judge",
+      "reason": "The AI names none of the three FY2023 acquisitions in the gold answer (Czech flexibles manufacturer, Shanghai medical device packaging site, New Zealand protein packaging machine maker). It says the filings don't name them, and it only mentions the Shanghai deal as a pending agreement with unconfirmed closing. It also reports no FY2022 or FY2021 acquisitions, so the main answer does not match the gold answer in substance. [re-scored after not-found bug fix]",
       "retrieval_hit": false,
       "citations": [
         [

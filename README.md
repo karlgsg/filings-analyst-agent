@@ -10,7 +10,7 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 2 in progress — hybrid search, reranking and the tool-calling agent are done; tracing and the full 150-question run are next. See [PLAN.md](PLAN.md).
+> **Status:** Phase 2 in progress — hybrid search, reranking, the tool-calling agent and tracing are done; the full 150-question run is next. See [PLAN.md](PLAN.md).
 
 ## Results
 
@@ -21,13 +21,18 @@ Accuracy on a fixed 30-question FinanceBench subset (same questions for every ro
 | Baseline: vector search → Claude Haiku 5.5 | **33.3%** | 33.3% | $0.0009 | 3.5 s |
 | + hybrid search (vector + IDF keyword, RRF) | 33.3% | 30.0% | $0.0010 | 3.6 s |
 | + cross-encoder reranker (hybrid top-~55 → MiniLM → top 8) | 33.3% | 40.0% | $0.0011 | 3.8 s |
-| **+ tool-calling agent** (multi-search with filters, calculator) | **83.3%** | 90.0% | $0.0020 | 5.0 s |
+| **+ tool-calling agent** (multi-search with filters, calculator) | **76.7%**¹ | 90.0% | $0.0020 | 4.9 s |
 
 *Retrieval hit rate* = how often the page containing the gold evidence was among the retrieved chunks.
+¹ Two runs of the same agent scored 83.3% and 76.7%. The agent's answers were essentially identical; the difference is two borderline judge calls (see *Grading noise* below). The table reports the stricter run.
 
 **Hybrid search: same score, different questions.** It gained 3 questions that hinge on exact years and figures (e.g. Best Buy's FY2015–17 margin) and lost 3 others, net zero. Plain Postgres full-text ranking has no notion of word rarity, so keyword search alone found the gold page only 3% of the time; adding IDF weighting raised that to 27%. The useful finding: vector and keyword search find *different* gold pages — their combined top-30 candidates contain the gold page for **63%** of questions vs 53% for vector alone — but RRF can't pick the right 6 from that pool. That's the reranker's job (next).
 
-**Agent: 33% → 83%.** Replacing "retrieve once, then answer" with a tool-calling loop was the big win. The model searches as many times as it needs (avg 2.6 steps, max 6) with company/year filters, does all arithmetic in a safe `calculate` tool, and submits a structured `final_answer` with citations. "Couldn't find it" answers dropped from 12 to 0, and the multi-statement questions (EBITDA, multi-year averages) are now answered correctly. Cost doubled to ~$0.002/question; prompt caching keeps it there (most of each step's input is re-sent conversation, billed at 10%). All 30 judge verdicts were hand-reviewed: 28 agreed, one lenient and one harsh call, net zero.
+**Tracing (Langfuse).** Every question is a trace: each Claude call is a generation (tokens, cost, latency), each search/calculation a timed span, and the eval's verdict is attached as a score, so the dashboard can be filtered straight to wrong answers. Third-party SDK spans are filtered out to avoid double-counting cost. Where the time goes, per question: **Claude calls 4.8 s, search 0.9 s** (incl. the local reranker), calculator ~0 s — so speeding the agent up means fewer or cheaper model steps, not faster retrieval.
+
+**Grading noise.** Re-running the agent unchanged moved accuracy from 83.3% to 73.3%. Comparing the runs question by question, *none* of the flips came from the agent: two were the LLM judge ruling differently on near-identical answers, and one was a scorer bug (a correct answer that mentioned "I could not find any FY2021 acquisitions" in its last sentence was auto-failed as "not found"). The bug is fixed and both affected saved results were re-scored (rerank unchanged, agent → 76.7%). With 30 questions, one question is 3.3 points — differences under ~10 points are within noise, which is why the next step is the full 150-question run.
+
+**Agent: 33% → 77–83%.** Replacing "retrieve once, then answer" with a tool-calling loop was the big win. The model searches as many times as it needs (avg 2.6 steps, max 6) with company/year filters, does all arithmetic in a safe `calculate` tool, and submits a structured `final_answer` with citations. "Couldn't find it" answers dropped from 12 to 0, and the multi-statement questions (EBITDA, multi-year averages) are now answered correctly. Cost doubled to ~$0.002/question; prompt caching keeps it there (most of each step's input is re-sent conversation, billed at 10%). All 30 judge verdicts were hand-reviewed: 28 agreed, one lenient and one harsh call, net zero.
 
 **Reranker: retrieval up, accuracy flat.** Reranking the hybrid candidates with a local cross-encoder lifted the gold-page hit rate from 33% to 40% (the small MiniLM model matched the larger `bge-reranker-base` at ~6× the speed). Accuracy stayed at 33.3%. Of the 4 questions that retrieved a gold page but were still wrong, 2 need figures from **two different statements** (e.g. EBITDA = operating income from the income statement + D&A from the cash flow statement) — one retrieval pass finds one page, never both — and 2 are judgment calls where the model read the question differently. Both point to the next step: an agent that can search multiple times and calculate.
 
@@ -58,6 +63,7 @@ Agent:     question → Claude ─┬─ search_filings(query, company, year)   
 | LLM | Claude via the official `anthropic` SDK (no LangChain) — Haiku 5.5 by default, model is a config switch |
 | Embeddings | `BAAI/bge-small-en-v1.5`, run locally (free) |
 | Database | Postgres 17 + pgvector (Docker) — vectors and full-text search in one place |
+| Tracing | Langfuse (optional — disabled when keys aren't set) |
 | Tooling | Python 3.12, `uv`, `pytest`, `ruff` |
 
 ## Run it locally

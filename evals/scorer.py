@@ -14,7 +14,8 @@ from dataclasses import dataclass
 import anthropic
 from pydantic import BaseModel
 
-from analyst.config import JUDGE_MODEL
+from analyst import tracing
+from analyst.config import JUDGE_MODEL, cost_usd
 
 TOLERANCE = 0.02  # 2% relative
 NUMBER_RE = re.compile(r"-?\(?\$?\s*\d[\d,]*\.?\d*\)?")
@@ -92,19 +93,22 @@ AI answer:
 
 
 def judge(question: str, gold: str, answer: str, client: anthropic.Anthropic) -> Score:
-    response = client.messages.parse(
-        model=JUDGE_MODEL,
-        max_tokens=2000,
-        output_config={"effort": "low"},
-        messages=[
-            {
-                "role": "user",
-                "content": JUDGE_PROMPT.format(question=question, gold=gold, answer=answer),
-            }
-        ],
-        output_format=JudgeVerdict,
-    )
-    verdict = response.parsed_output
+    prompt = JUDGE_PROMPT.format(question=question, gold=gold, answer=answer)
+    with tracing.observation("judge", as_type="generation", model=JUDGE_MODEL, input=prompt) as gen:
+        response = client.messages.parse(
+            model=JUDGE_MODEL,
+            max_tokens=2000,
+            output_config={"effort": "low"},
+            messages=[{"role": "user", "content": prompt}],
+            output_format=JudgeVerdict,
+        )
+        verdict = response.parsed_output
+        u = response.usage
+        gen.update(
+            output=verdict.model_dump(),
+            usage_details={"input": u.input_tokens, "output": u.output_tokens},
+            cost_details={"total": cost_usd(JUDGE_MODEL, u.input_tokens, u.output_tokens)},
+        )
     return Score(
         correct=verdict.correct,
         method="judge",
@@ -114,9 +118,17 @@ def judge(question: str, gold: str, answer: str, client: anthropic.Anthropic) ->
     )
 
 
+def says_not_found(answer: str) -> bool:
+    """True only if the answer *leads* with 'I couldn't find it'. A correct answer that
+    later says 'I could not find any FY2021 deals' must still be scored normally."""
+    head = direct_answer(answer).replace("\u2019", "'").lower()  # curly apostrophes
+    first_sentence = re.split(r"(?<=[.!?])\s", head, maxsplit=1)[0]
+    return any(p in first_sentence for p in NOT_FOUND_PHRASES)
+
+
 def score(question: str, gold: str, answer: str, client: anthropic.Anthropic) -> Score:
     head = direct_answer(answer)
-    if any(p in head.lower() for p in NOT_FOUND_PHRASES):
+    if says_not_found(answer):
         return Score(False, "not_found", "model said the answer wasn't in the filings")
 
     expected = gold_number(gold)
