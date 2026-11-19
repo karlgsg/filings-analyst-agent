@@ -23,3 +23,9 @@ CREATE INDEX IF NOT EXISTS chunks_embedding_hnsw
 CREATE INDEX IF NOT EXISTS chunks_tsv_gin ON chunks USING gin (tsv);
 
 CREATE INDEX IF NOT EXISTS chunks_company_year ON chunks (company, doc_year);
+
+-- How many chunks contain each word. Used to weight rare words higher in keyword
+-- search (IDF). Refresh after indexing new documents.
+CREATE MATERIALIZED VIEW IF NOT EXISTS lexeme_stats AS
+    SELECT word, ndoc FROM ts_stat('SELECT tsv FROM public.chunks');
+CREATE UNIQUE INDEX IF NOT EXISTS lexeme_stats_word ON lexeme_stats (word);

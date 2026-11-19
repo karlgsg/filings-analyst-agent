@@ -43,6 +43,10 @@ def main() -> None:
             insert_chunks(conn, chunks, embeddings, meta)
             expected += len(chunks)
 
+        # Keyword search weights words by rarity; recount after adding documents.
+        conn.execute("REFRESH MATERIALIZED VIEW lexeme_stats")
+        conn.commit()
+
         print(f"\nInserted this run: {expected} chunks")
         print(f"Rows in chunks table: {count_chunks(conn)}")
 

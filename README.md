@@ -19,11 +19,13 @@ Accuracy on a fixed 30-question FinanceBench subset (same questions for every ro
 | Config | Accuracy | Retrieval hit rate | Cost / question | p50 latency |
 |---|---|---|---|---|
 | Baseline: vector search → Claude Haiku 5.5 | **33.3%** | 33.3% | $0.0009 | 3.5 s |
-| + hybrid search (vector + full-text, RRF) | _next_ | | | |
+| + hybrid search (vector + IDF keyword, RRF) | 33.3% | 30.0% | $0.0010 | 3.6 s |
 | + cross-encoder reranker | | | | |
 | + tool-calling agent with calculator | | | | |
 
 *Retrieval hit rate* = how often the page containing the gold evidence was among the retrieved chunks.
+
+**Hybrid search: same score, different questions.** It gained 3 questions that hinge on exact years and figures (e.g. Best Buy's FY2015–17 margin) and lost 3 others, net zero. Plain Postgres full-text ranking has no notion of word rarity, so keyword search alone found the gold page only 3% of the time; adding IDF weighting raised that to 27%. The useful finding: vector and keyword search find *different* gold pages — their combined top-30 candidates contain the gold page for **63%** of questions vs 53% for vector alone — but RRF can't pick the right 6 from that pool. That's the reranker's job (next).
 
 **What the baseline tells us:** half of the misses are the model correctly saying *"I couldn't find this in the provided filings"* — the right page was never retrieved. Retrieval, not the LLM, is the bottleneck, which sets the order of Phase 2. Full per-question results: [evals/results/baseline.json](evals/results/baseline.json).
 
@@ -82,7 +84,7 @@ Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_e
 src/analyst/
   ingest/      download FinanceBench, PDF → chunks, index into Postgres
   db/          schema + database access
-  retrieval/   vector search (hybrid + reranking coming in Phase 2)
+  retrieval/   vector, keyword (IDF-weighted), and hybrid (RRF) search
   agent/       prompts + baseline answerer
 evals/         eval set, scorer, runner, committed results
 tests/         unit tests

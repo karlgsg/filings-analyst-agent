@@ -49,6 +49,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="name for this run, e.g. baseline")
     parser.add_argument("--limit", type=int, help="only run the first N questions")
+    parser.add_argument("--retriever", choices=["vector", "hybrid"], default="vector")
     args = parser.parse_args()
 
     questions = load_eval_set()[: args.limit]
@@ -58,7 +59,7 @@ def main() -> None:
     with connect() as conn:
         for i, q in enumerate(questions, 1):
             start = time.perf_counter()
-            a = answer(q["question"], conn=conn, client=client)
+            a = answer(q["question"], conn=conn, client=client, retriever=args.retriever)
             latency = time.perf_counter() - start
             s = scorer.score(q["question"], q["answer"], a.text, client)
 
@@ -89,6 +90,7 @@ def main() -> None:
     n = len(rows)
     summary = {
         "config": args.config,
+        "retriever": args.retriever,
         "answer_model": ANSWER_MODEL,
         "judge_model": JUDGE_MODEL,
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),

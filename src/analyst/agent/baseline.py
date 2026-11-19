@@ -17,9 +17,11 @@ import anthropic
 from analyst.agent.prompts import BASELINE_SYSTEM, baseline_user_message
 from analyst.config import ANSWER_MODEL
 from analyst.db.store import connect
+from analyst.retrieval.hybrid import hybrid_search
 from analyst.retrieval.vector import Hit, vector_search
 
 TOP_K = 6
+RETRIEVERS = {"vector": vector_search, "hybrid": hybrid_search}
 CITATION_RE = re.compile(r"\[([^\[\],]+), p\.(\d+)\]")
 
 
@@ -44,12 +46,17 @@ def parse_citations(text: str) -> list[tuple[str, int]]:
     return seen
 
 
-def answer(question: str, conn=None, client: anthropic.Anthropic | None = None) -> Answer:
+def answer(
+    question: str,
+    conn=None,
+    client: anthropic.Anthropic | None = None,
+    retriever: str = "vector",
+) -> Answer:
     client = client or anthropic.Anthropic()
     own_conn = conn is None
     conn = conn or connect()
     try:
-        hits = vector_search(conn, question, k=TOP_K)
+        hits = RETRIEVERS[retriever](conn, question, k=TOP_K)
     finally:
         if own_conn:
             conn.close()
