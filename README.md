@@ -10,7 +10,7 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 1 complete — working baseline + evaluation harness. Phase 2 (hybrid search, reranking, tool-calling agent) in progress. See [PLAN.md](PLAN.md).
+> **Status:** Phase 2 in progress — hybrid search, reranking and the tool-calling agent are done; tracing and the full 150-question run are next. See [PLAN.md](PLAN.md).
 
 ## Results
 
@@ -21,11 +21,13 @@ Accuracy on a fixed 30-question FinanceBench subset (same questions for every ro
 | Baseline: vector search → Claude Haiku 5.5 | **33.3%** | 33.3% | $0.0009 | 3.5 s |
 | + hybrid search (vector + IDF keyword, RRF) | 33.3% | 30.0% | $0.0010 | 3.6 s |
 | + cross-encoder reranker (hybrid top-~55 → MiniLM → top 8) | 33.3% | 40.0% | $0.0011 | 3.8 s |
-| + tool-calling agent with calculator | | | | |
+| **+ tool-calling agent** (multi-search with filters, calculator) | **83.3%** | 90.0% | $0.0020 | 5.0 s |
 
 *Retrieval hit rate* = how often the page containing the gold evidence was among the retrieved chunks.
 
 **Hybrid search: same score, different questions.** It gained 3 questions that hinge on exact years and figures (e.g. Best Buy's FY2015–17 margin) and lost 3 others, net zero. Plain Postgres full-text ranking has no notion of word rarity, so keyword search alone found the gold page only 3% of the time; adding IDF weighting raised that to 27%. The useful finding: vector and keyword search find *different* gold pages — their combined top-30 candidates contain the gold page for **63%** of questions vs 53% for vector alone — but RRF can't pick the right 6 from that pool. That's the reranker's job (next).
+
+**Agent: 33% → 83%.** Replacing "retrieve once, then answer" with a tool-calling loop was the big win. The model searches as many times as it needs (avg 2.6 steps, max 6) with company/year filters, does all arithmetic in a safe `calculate` tool, and submits a structured `final_answer` with citations. "Couldn't find it" answers dropped from 12 to 0, and the multi-statement questions (EBITDA, multi-year averages) are now answered correctly. Cost doubled to ~$0.002/question; prompt caching keeps it there (most of each step's input is re-sent conversation, billed at 10%). All 30 judge verdicts were hand-reviewed: 28 agreed, one lenient and one harsh call, net zero.
 
 **Reranker: retrieval up, accuracy flat.** Reranking the hybrid candidates with a local cross-encoder lifted the gold-page hit rate from 33% to 40% (the small MiniLM model matched the larger `bge-reranker-base` at ~6× the speed). Accuracy stayed at 33.3%. Of the 4 questions that retrieved a gold page but were still wrong, 2 need figures from **two different statements** (e.g. EBITDA = operating income from the income statement + D&A from the cash flow statement) — one retrieval pass finds one page, never both — and 2 are judgment calls where the model read the question differently. Both point to the next step: an agent that can search multiple times and calculate.
 
@@ -39,7 +41,12 @@ FinanceBench PDFs → page text (PyMuPDF) → ~450-word chunks → bge-small emb
                                           (never cross pages,                         (HNSW vector index +
                                            keep doc + page)                            full-text tsvector)
 
-question → embed → top-6 nearest chunks → Claude (answer only from excerpts, cite [doc, p.N]) → answer + citations
+Baseline:  question → top-6 nearest chunks → Claude → answer + citations
+
+Agent:     question → Claude ─┬─ search_filings(query, company, year)   hybrid search → cross-encoder rerank → top 6
+                              ├─ calculate("11512 + 2763 - 5207")        safe AST evaluator, no eval()
+                              ├─ ... (up to 6 steps)
+                              └─ final_answer(answer, citations)
 ```
 
 **Evaluation** ([evals/](evals/)): each answer is scored against FinanceBench's gold answer. Numeric answers are checked in code (±2%, with million/billion scaling); everything else goes to an LLM judge with structured output. Judge verdicts were spot-checked by hand.
@@ -87,7 +94,7 @@ src/analyst/
   ingest/      download FinanceBench, PDF → chunks, index into Postgres
   db/          schema + database access
   retrieval/   vector, keyword (IDF-weighted), hybrid (RRF), cross-encoder rerank
-  agent/       prompts + baseline answerer
+  agent/       prompts, baseline answerer, tool-calling loop, tools, safe calculator
 evals/         eval set, scorer, runner, committed results
 tests/         unit tests
 ```

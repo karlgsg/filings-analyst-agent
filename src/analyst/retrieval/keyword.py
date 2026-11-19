@@ -6,7 +6,7 @@ import re
 
 import psycopg
 
-from analyst.retrieval.vector import Hit
+from analyst.retrieval.vector import FILTER_SQL, Hit
 
 # Words that describe *how* to answer rather than *what* to find. In an OR query they
 # match boilerplate everywhere and drown out the content words.
@@ -38,7 +38,13 @@ def _full_year(y: str) -> str:
     return y if len(y) == 4 else f"20{y}"
 
 
-def keyword_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit]:
+def keyword_search(
+    conn: psycopg.Connection,
+    query: str,
+    k: int = 6,
+    company: str | None = None,
+    year: int | None = None,
+) -> list[Hit]:
     """Top-k chunks by IDF-weighted keyword match.
 
     Each query word is weighted by idf = ln(total chunks / chunks containing it), so rare,
@@ -48,9 +54,9 @@ def keyword_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit
     ts_rank has no idf at all, which made plain keyword search nearly useless here.)
     """
     rows = conn.execute(
-        """
+        f"""
         WITH terms AS (
-            SELECT DISTINCT lexeme FROM unnest(to_tsvector('english', %s))
+            SELECT DISTINCT lexeme FROM unnest(to_tsvector('english', %(q)s))
         ),
         weighted AS (
             SELECT t.lexeme, ln((SELECT count(*) FROM chunks)::float / s.ndoc) AS idf
@@ -59,10 +65,11 @@ def keyword_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit
         SELECT c.id, c.doc_name, c.page, c.text, sum(w.idf) AS score
         FROM weighted w
         JOIN chunks c ON c.tsv @@ quote_literal(w.lexeme)::tsquery
+        WHERE {FILTER_SQL}
         GROUP BY c.id
         ORDER BY score DESC
-        LIMIT %s
+        LIMIT %(k)s
         """,
-        (clean_query(query), k),
+        {"q": clean_query(query), "k": k, "company": company, "year": year},
     ).fetchall()
     return [Hit(*row) for row in rows]

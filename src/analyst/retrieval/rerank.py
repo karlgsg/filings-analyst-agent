@@ -26,9 +26,16 @@ def _model(name: str) -> CrossEncoder:
     return CrossEncoder(name, max_length=512)
 
 
-def candidates(conn: psycopg.Connection, query: str, n: int = CANDIDATES) -> list[Hit]:
+def candidates(
+    conn: psycopg.Connection, query: str, n: int = CANDIDATES, company=None, year=None
+) -> list[Hit]:
     """Union of vector top-n and keyword top-n (deduplicated, RRF order)."""
-    return rrf_fuse([vector_search(conn, query, k=n), keyword_search(conn, query, k=n)])
+    return rrf_fuse(
+        [
+            vector_search(conn, query, k=n, company=company, year=year),
+            keyword_search(conn, query, k=n, company=company, year=year),
+        ]
+    )
 
 
 def rerank(query: str, hits: list[Hit], k: int, model_name: str = RERANK_MODEL) -> list[Hit]:
@@ -39,5 +46,7 @@ def rerank(query: str, hits: list[Hit], k: int, model_name: str = RERANK_MODEL) 
     return [Hit(h.id, h.doc_name, h.page, h.text, float(s)) for h, s in ranked[:k]]
 
 
-def rerank_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit]:
-    return rerank(query, candidates(conn, query), k)
+def rerank_search(
+    conn: psycopg.Connection, query: str, k: int = 6, company=None, year=None
+) -> list[Hit]:
+    return rerank(query, candidates(conn, query, company=company, year=year), k)

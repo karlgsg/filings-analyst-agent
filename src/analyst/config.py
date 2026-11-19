@@ -22,6 +22,19 @@ PRICES = {
 }
 
 
-def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+def cost_usd(
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
+    cache_write_tokens: int = 0,
+    cache_read_tokens: int = 0,
+) -> float:
+    """input_tokens is the uncached part; cache writes cost 1.25x input, reads 0.1x."""
     price_in, price_out = PRICES.get(model, (0.0, 0.0))
-    return round((input_tokens * price_in + output_tokens * price_out) / 1_000_000, 6)
+    total = (
+        input_tokens * price_in
+        + cache_write_tokens * price_in * 1.25
+        + cache_read_tokens * price_in * 0.10
+        + output_tokens * price_out
+    )
+    return round(total / 1_000_000, 6)

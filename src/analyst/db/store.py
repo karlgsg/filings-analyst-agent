@@ -18,6 +18,10 @@ def connect() -> psycopg.Connection:
     conn = psycopg.connect(DATABASE_URL)
     conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
     register_vector(conn)  # lets us pass numpy arrays as vector values
+    # With a WHERE filter, the HNSW index would otherwise return its ~40 nearest
+    # neighbours *then* filter, often leaving too few rows. Iterative scans keep
+    # searching the index until LIMIT rows pass the filter (pgvector >= 0.8).
+    conn.execute("SET hnsw.iterative_scan = strict_order")
     return conn
 
 

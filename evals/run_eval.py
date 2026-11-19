@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent))  # so `import scorer` works when 
 import scorer
 
 from analyst.agent.baseline import answer
+from analyst.agent.loop import run_agent
 from analyst.config import ANSWER_MODEL, JUDGE_MODEL, cost_usd
 from analyst.db.store import connect
 from analyst.ingest.financebench import selected_questions
@@ -49,7 +50,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="name for this run, e.g. baseline")
     parser.add_argument("--limit", type=int, help="only run the first N questions")
-    parser.add_argument("--retriever", choices=["vector", "hybrid", "rerank"], default="vector")
+    parser.add_argument(
+        "--retriever",
+        choices=["vector", "hybrid", "rerank", "agent"],
+        default="vector",
+        help="'agent' = tool-calling loop (search_filings uses rerank internally)",
+    )
     parser.add_argument("--top-k", type=int, default=6, help="chunks given to the model")
     args = parser.parse_args()
 
@@ -60,9 +66,16 @@ def main() -> None:
     with connect() as conn:
         for i, q in enumerate(questions, 1):
             start = time.perf_counter()
-            a = answer(
-                q["question"], conn=conn, client=client, retriever=args.retriever, top_k=args.top_k
-            )
+            if args.retriever == "agent":
+                a = run_agent(q["question"], conn=conn, client=client)
+            else:
+                a = answer(
+                    q["question"],
+                    conn=conn,
+                    client=client,
+                    retriever=args.retriever,
+                    top_k=args.top_k,
+                )
             latency = time.perf_counter() - start
             s = scorer.score(q["question"], q["answer"], a.text, client)
 
@@ -80,8 +93,17 @@ def main() -> None:
                     "reason": s.reason,
                     "retrieval_hit": bool(gold_pages & retrieved),
                     "citations": a.citations,
+                    "steps": a.extra.get("steps", 1),
+                    "finished_by": a.extra.get("finished_by", "rag"),
+                    "trace": a.extra.get("trace", []),
                     "latency_s": round(latency, 2),
-                    "answer_cost_usd": cost_usd(a.model, a.input_tokens, a.output_tokens),
+                    "answer_cost_usd": cost_usd(
+                        a.model,
+                        a.input_tokens,
+                        a.output_tokens,
+                        a.cache_write_tokens,
+                        a.cache_read_tokens,
+                    ),
                     "judge_cost_usd": cost_usd(
                         JUDGE_MODEL, s.judge_input_tokens, s.judge_output_tokens
                     ),
@@ -104,6 +126,7 @@ def main() -> None:
         "avg_cost_per_q_usd": round(sum(r["answer_cost_usd"] for r in rows) / n, 5),
         "total_cost_usd": round(sum(r["answer_cost_usd"] + r["judge_cost_usd"] for r in rows), 4),
         "p50_latency_s": round(statistics.median(r["latency_s"] for r in rows), 2),
+        "avg_steps": round(sum(r["steps"] for r in rows) / n, 2),
         "scored_by": {
             m: sum(r["method"] == m for r in rows) for m in ("numeric", "judge", "not_found")
         },

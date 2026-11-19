@@ -15,22 +15,36 @@ class Hit:
     doc_name: str
     page: int
     text: str
-    score: float  # cosine similarity, higher is better
+    score: float  # higher is better (meaning depends on the retriever)
 
     @property
     def label(self) -> str:
         return f"[{self.doc_name}, p.{self.page}]"
 
 
-def vector_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit]:
-    """Top-k chunks by cosine similarity, searched across *all* documents."""
+# Optional filters shared by all retrievers. NULL means "don't filter".
+FILTER_SQL = """
+    (%(company)s::text IS NULL OR company = %(company)s)
+    AND (%(year)s::int IS NULL OR doc_year = %(year)s)
+"""
+
+
+def vector_search(
+    conn: psycopg.Connection,
+    query: str,
+    k: int = 6,
+    company: str | None = None,
+    year: int | None = None,
+) -> list[Hit]:
+    """Top-k chunks by cosine similarity, optionally filtered by company / filing year."""
     rows = conn.execute(
-        """
-        SELECT id, doc_name, page, text, 1 - (embedding <=> %s) AS score
+        f"""
+        SELECT id, doc_name, page, text, 1 - (embedding <=> %(q)s) AS score
         FROM chunks
-        ORDER BY embedding <=> %s
-        LIMIT %s
+        WHERE {FILTER_SQL}
+        ORDER BY embedding <=> %(q)s
+        LIMIT %(k)s
         """,
-        (q := embed_query(query), q, k),
+        {"q": embed_query(query), "k": k, "company": company, "year": year},
     ).fetchall()
     return [Hit(*row) for row in rows]

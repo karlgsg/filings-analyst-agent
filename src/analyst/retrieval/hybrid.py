@@ -24,7 +24,9 @@ def rrf_fuse(ranked_lists: list[list[Hit]], k: int = RRF_K) -> list[Hit]:
     return [Hit(hits[i].id, hits[i].doc_name, hits[i].page, hits[i].text, scores[i]) for i in fused]
 
 
-def hybrid_search(conn: psycopg.Connection, query: str, k: int = 6) -> list[Hit]:
-    vec = vector_search(conn, query, k=CANDIDATES)
-    kw = keyword_search(conn, query, k=CANDIDATES)
+def hybrid_search(
+    conn: psycopg.Connection, query: str, k: int = 6, company=None, year=None
+) -> list[Hit]:
+    vec = vector_search(conn, query, k=CANDIDATES, company=company, year=year)
+    kw = keyword_search(conn, query, k=CANDIDATES, company=company, year=year)
     return rrf_fuse([vec, kw])[:k]
