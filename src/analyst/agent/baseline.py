@@ -18,10 +18,11 @@ from analyst.agent.prompts import BASELINE_SYSTEM, baseline_user_message
 from analyst.config import ANSWER_MODEL
 from analyst.db.store import connect
 from analyst.retrieval.hybrid import hybrid_search
+from analyst.retrieval.rerank import rerank_search
 from analyst.retrieval.vector import Hit, vector_search
 
 TOP_K = 6
-RETRIEVERS = {"vector": vector_search, "hybrid": hybrid_search}
+RETRIEVERS = {"vector": vector_search, "hybrid": hybrid_search, "rerank": rerank_search}
 CITATION_RE = re.compile(r"\[([^\[\],]+), p\.(\d+)\]")
 
 
@@ -51,12 +52,13 @@ def answer(
     conn=None,
     client: anthropic.Anthropic | None = None,
     retriever: str = "vector",
+    top_k: int = TOP_K,
 ) -> Answer:
     client = client or anthropic.Anthropic()
     own_conn = conn is None
     conn = conn or connect()
     try:
-        hits = RETRIEVERS[retriever](conn, question, k=TOP_K)
+        hits = RETRIEVERS[retriever](conn, question, k=top_k)
     finally:
         if own_conn:
             conn.close()

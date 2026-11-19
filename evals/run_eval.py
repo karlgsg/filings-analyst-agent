@@ -49,7 +49,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="name for this run, e.g. baseline")
     parser.add_argument("--limit", type=int, help="only run the first N questions")
-    parser.add_argument("--retriever", choices=["vector", "hybrid"], default="vector")
+    parser.add_argument("--retriever", choices=["vector", "hybrid", "rerank"], default="vector")
+    parser.add_argument("--top-k", type=int, default=6, help="chunks given to the model")
     args = parser.parse_args()
 
     questions = load_eval_set()[: args.limit]
@@ -59,7 +60,9 @@ def main() -> None:
     with connect() as conn:
         for i, q in enumerate(questions, 1):
             start = time.perf_counter()
-            a = answer(q["question"], conn=conn, client=client, retriever=args.retriever)
+            a = answer(
+                q["question"], conn=conn, client=client, retriever=args.retriever, top_k=args.top_k
+            )
             latency = time.perf_counter() - start
             s = scorer.score(q["question"], q["answer"], a.text, client)
 
@@ -91,6 +94,7 @@ def main() -> None:
     summary = {
         "config": args.config,
         "retriever": args.retriever,
+        "top_k": args.top_k,
         "answer_model": ANSWER_MODEL,
         "judge_model": JUDGE_MODEL,
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
