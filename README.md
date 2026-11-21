@@ -93,6 +93,7 @@ Agent:     question → Claude ─┬─ search_filings(query, company, year)   
 | LLM | Claude via the official `anthropic` SDK (no LangChain) — Haiku 5.5 by default, model is a config switch |
 | Embeddings | `BAAI/bge-small-en-v1.5`, run locally (free) |
 | Database | Postgres 17 + pgvector (Docker) — vectors and full-text search in one place |
+| API | FastAPI (`POST /ask`, `GET /health`, auto-generated docs at `/docs`) |
 | Tracing | Langfuse (optional — disabled when keys aren't set) |
 | Tooling | Python 3.12, `uv`, `pytest`, `ruff` |
 
@@ -109,10 +110,20 @@ uv run python -m analyst.ingest.financebench      # questions + PDFs for the top
 uv run python -m analyst.ingest.financebench --top 32   # ...or all 84 filings (~160 MB)
 uv run python -m analyst.ingest.index             # chunk, embed, store (~7k / ~20k chunks)
 
-uv run python -m analyst.agent.baseline "What was Boeing's revenue in FY2022?"
+uv run python -m analyst.agent.loop "What was Boeing's revenue in FY2022?"   # the agent, from the CLI
+uv run uvicorn analyst.api.main:app --reload     # the API: docs at http://127.0.0.1:8000/docs
 uv run python evals/run_eval.py --config baseline # run the 30-question eval (~$0.03)
 uv run python evals/run_eval.py --config agent --retriever agent --full   # all 150 (~$0.30 on Haiku)
 uv run pytest
+```
+
+Ask the API directly:
+
+```bash
+curl -X POST localhost:8000/ask -H 'content-type: application/json' \
+     -d '{"question": "What was Walmart'"'"'s FY2020 total revenue?"}'
+# -> {"answer": "...$523,964 million...", "citations": [{"doc_name": "WALMART_2020_10K", "page": 51,
+#     "text": "..."}], "steps": [...], "cost_usd": 0.0011, "latency_s": 3.0, "trace_id": "..."}
 ```
 
 Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_eval.py --config baseline-sonnet`. If a run is interrupted, re-run the same command with `--resume`.
@@ -134,6 +145,7 @@ src/analyst/
   db/          schema + database access
   retrieval/   vector, keyword (IDF-weighted), hybrid (RRF), cross-encoder rerank
   agent/       prompts, baseline answerer, tool-calling loop, tools, safe calculator
+  api/         FastAPI app: POST /ask, GET /health
 evals/         eval set, scorer, runner, committed results
 tests/         unit tests
 ```
