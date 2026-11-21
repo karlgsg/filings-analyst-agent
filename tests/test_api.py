@@ -10,7 +10,7 @@ from analyst.api import main
 from analyst.retrieval.vector import Hit
 
 
-def fake_answer(question, conn, client):
+def fake_answer(question, conn, client, company=None, year=None):
     return Answer(
         question=question,
         text="$1,577 million\n\nSources: [3M_2018_10K, p.60]",
@@ -70,3 +70,16 @@ def test_model_rate_limit_becomes_503(client, monkeypatch):
     monkeypatch.setattr(main, "run_agent", rate_limited)
     r = client.post("/ask", json={"question": "What was 3M's FY2018 capex?"})
     assert r.status_code == 503
+
+
+def test_ask_passes_filters_to_the_agent(client, monkeypatch):
+    calls = []
+
+    def recording(question, conn, client, company=None, year=None):
+        calls.append((company, year))
+        return fake_answer(question, conn, client)
+
+    monkeypatch.setattr(main, "run_agent", recording)
+    r = client.post("/ask", json={"question": "Revenue?", "company": "3M", "year": 2018})
+    assert r.status_code == 200
+    assert calls == [("3M", 2018)]

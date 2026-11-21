@@ -93,7 +93,8 @@ Agent:     question → Claude ─┬─ search_filings(query, company, year)   
 | LLM | Claude via the official `anthropic` SDK (no LangChain) — Haiku 5.5 by default, model is a config switch |
 | Embeddings | `BAAI/bge-small-en-v1.5`, run locally (free) |
 | Database | Postgres 17 + pgvector (Docker) — vectors and full-text search in one place |
-| API | FastAPI (`POST /ask`, `GET /health`, auto-generated docs at `/docs`) |
+| API | FastAPI (`POST /ask`, `GET /companies`, `GET /health`; auto-generated docs at `/docs`) |
+| UI | Streamlit chat: expandable citations with the source passage, company/year filter, reasoning-steps toggle |
 | Tracing | Langfuse (optional — disabled when keys aren't set) |
 | Tooling | Python 3.12, `uv`, `pytest`, `ruff` |
 
@@ -112,6 +113,7 @@ uv run python -m analyst.ingest.index             # chunk, embed, store (~7k / ~
 
 uv run python -m analyst.agent.loop "What was Boeing's revenue in FY2022?"   # the agent, from the CLI
 uv run uvicorn analyst.api.main:app --reload     # the API: docs at http://127.0.0.1:8000/docs
+uv run streamlit run src/analyst/ui/app.py       # the chat UI (in a second terminal; needs the API)
 uv run python evals/run_eval.py --config baseline # run the 30-question eval (~$0.03)
 uv run python evals/run_eval.py --config agent --retriever agent --full   # all 150 (~$0.30 on Haiku)
 uv run pytest
@@ -135,6 +137,8 @@ Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_e
 - **Fixed, committed eval set** (seed 42) so every configuration is compared on identical questions.
 - **Free checks first:** numeric answers and "not found" responses are scored in code; only the rest pay for an LLM judge.
 - **Haiku as the default model.** On the full benchmark it's within 4 points of Opus at 1/31 of the cost; the model is one env var (`ANSWER_MODEL`) if a use case needs the extra accuracy.
+- **UI → API → agent.** The Streamlit app only calls the HTTP API, so it deploys separately and anything else can use the same API. Trade-off: two processes to run locally.
+- **UI filters are enforced, not suggested.** Picking a company/year overrides the filter on every search the agent makes (and tells the model the scope), rather than hoping the model follows an instruction.
 - **Filing text is treated as untrusted input** in the prompt (groundwork for prompt-injection testing).
 
 ## Project layout
@@ -145,7 +149,8 @@ src/analyst/
   db/          schema + database access
   retrieval/   vector, keyword (IDF-weighted), hybrid (RRF), cross-encoder rerank
   agent/       prompts, baseline answerer, tool-calling loop, tools, safe calculator
-  api/         FastAPI app: POST /ask, GET /health
+  api/         FastAPI app: POST /ask, GET /companies, GET /health
+  ui/          Streamlit chat UI (talks to the API over HTTP)
 evals/         eval set, scorer, runner, committed results
 tests/         unit tests
 ```

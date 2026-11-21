@@ -48,13 +48,17 @@ def run_agent(
     conn=None,
     client: anthropic.Anthropic | None = None,
     max_steps: int = MAX_STEPS,
+    company: str | None = None,
+    year: int | None = None,
 ) -> Answer:
+    """company / year (optional) restrict every search to those filings, e.g. from a UI filter."""
     client = client or anthropic.Anthropic()
     own_conn = conn is None
     conn = conn or connect()
     try:
         with tracing.observation("agent", as_type="agent", input={"question": question}) as obs:
-            answer = _loop(question, conn, client, max_steps)
+            scope = {k: v for k, v in (("company", company), ("year", year)) if v}
+            answer = _loop(question, conn, client, max_steps, scope)
             answer.extra["trace_id"] = tracing.current_trace_id()
             obs.update(
                 output={"answer": answer.text, "citations": answer.citations},
@@ -104,12 +108,12 @@ def _call_model(client, request: dict, step: int, log: list[dict]):
     return response, tokens
 
 
-def _run_tool_traced(block, conn, step: int, log: list[dict]):
+def _run_tool_traced(name: str, args: dict, conn, step: int, log: list[dict]):
     """One tool call, traced as a Langfuse span and timed locally."""
-    as_type = "retriever" if block.name == "search_filings" else "tool"
-    with tracing.observation(block.name, as_type=as_type, input=block.input) as span:
+    as_type = "retriever" if name == "search_filings" else "tool"
+    with tracing.observation(name, as_type=as_type, input=args) as span:
         start = time.perf_counter()
-        output, hits, is_error = run_tool(block.name, block.input, conn)
+        output, hits, is_error = run_tool(name, args, conn)
         seconds = time.perf_counter() - start
         span.update(
             output=[
@@ -119,14 +123,24 @@ def _run_tool_traced(block, conn, step: int, log: list[dict]):
             else output,
             level="ERROR" if is_error else None,
         )
-    log.append({"step": step, "kind": block.name, "seconds": round(seconds, 3)})
+    log.append({"step": step, "kind": name, "seconds": round(seconds, 3)})
     return output, hits, is_error
 
 
-def _loop(question, conn, client, max_steps) -> Answer:
+def _scope_note(scope: dict) -> str:
+    where = f"{scope['company']}'s filings" if "company" in scope else "filings"
+    when = f" for fiscal year {scope['year']}" if "year" in scope else ""
+    return f"(Searches are restricted to {where}{when}.)\n\n"
+
+
+def _loop(question, conn, client, max_steps, scope: dict | None = None) -> Answer:
+    scope = scope or {}
     tools = tool_definitions(list_companies(conn))
     system = AGENT_SYSTEM.format(max_steps=max_steps)
-    messages: list[dict] = [{"role": "user", "content": question}]
+    # The scope goes in the user turn, not the system prompt, so the cached prefix
+    # (system + tools) stays identical for every question.
+    content = (_scope_note(scope) if scope else "") + question
+    messages: list[dict] = [{"role": "user", "content": content}]
 
     usage = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
     trace: list[dict] = []  # what the agent did (tools + inputs + outputs)
@@ -177,14 +191,17 @@ def _loop(question, conn, client, max_steps) -> Answer:
         # Run every requested tool and send all results back in ONE user message.
         results = []
         for block in tool_uses:
-            output, hits, is_error = _run_tool_traced(block, conn, step, timings)
+            args = block.input
+            if block.name == "search_filings":
+                args = {**args, **scope}  # enforce the filter, whatever the model asked for
+            output, hits, is_error = _run_tool_traced(block.name, args, conn, step, timings)
             for h in hits:
                 retrieved.setdefault(h.id, h)
             trace.append(
                 {
                     "step": step,
                     "tool": block.name,
-                    "input": block.input,
+                    "input": args,
                     # For searches, log which pages came back rather than the full text.
                     "output": [h.label for h in hits] if hits else output,
                     "is_error": is_error,

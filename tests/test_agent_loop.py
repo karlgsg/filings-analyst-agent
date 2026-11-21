@@ -96,3 +96,27 @@ def test_step_cap_forces_text_answer(monkeypatch):
     assert client.requests[-1]["messages"][-1]["content"][-1]["type"] == "text"
     assert a.citations == [("DOC", 1)]
     assert a.extra["finished_by"] == "step_limit"
+
+
+def test_scope_filter_is_enforced_on_every_search(monkeypatch):
+    setup(monkeypatch)
+    seen = []
+
+    def recording_run_tool(name, args, conn):
+        seen.append(args)
+        return fake_run_tool(name, args, conn)
+
+    monkeypatch.setattr(loop, "run_tool", recording_run_tool)
+    client = FakeClient(
+        [
+            # The model asks for a different company; the scope must win.
+            response(tool_use("t1", "search_filings", {"query": "revenue", "company": "OTHER"})),
+            response(tool_use("t2", "final_answer", {"answer": "100", "citations": []})),
+        ]
+    )
+    loop.run_agent("q?", conn=object(), client=client, company="ACME", year=2022)
+    assert seen == [{"query": "revenue", "company": "ACME", "year": 2022}]
+    assert (
+        "restricted to ACME's filings for fiscal year 2022"
+        in client.requests[0]["messages"][0]["content"]
+    )

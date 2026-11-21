@@ -26,6 +26,13 @@ from analyst.db.store import connect
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=1000, examples=["What was 3M's FY2018 capex?"])
+    company: str | None = Field(None, description="Only search this company's filings")
+    year: int | None = Field(None, description="Only search filings for this fiscal year")
+
+
+class Company(BaseModel):
+    company: str
+    years: list[int]
 
 
 class Source(BaseModel):
@@ -95,6 +102,16 @@ Client = Annotated[anthropic.Anthropic, Depends(get_client)]
 # ---- endpoints ----
 
 
+@app.get("/companies")
+def companies(conn: Conn) -> list[Company]:
+    """What's indexed: each company and the fiscal years of its filings (for UI filters)."""
+    rows = conn.execute(
+        "SELECT company, array_agg(DISTINCT doc_year ORDER BY doc_year) FROM chunks "
+        "GROUP BY company ORDER BY company"
+    ).fetchall()
+    return [Company(company=c, years=y) for c, y in rows]
+
+
 @app.get("/health")
 def health(conn: Conn) -> dict:
     chunks = conn.execute("SELECT count(*) FROM chunks").fetchone()[0]
@@ -108,7 +125,9 @@ def ask(req: AskRequest, conn: Conn, client: Client) -> AskResponse:
     start = time.perf_counter()
     try:
         with tracing.trace_attributes(trace_name="api ask", tags=["api"]):
-            a = run_agent(req.question, conn=conn, client=client)
+            a = run_agent(
+                req.question, conn=conn, client=client, company=req.company, year=req.year
+            )
     except anthropic.RateLimitError:
         raise HTTPException(503, "The model is busy (rate limited). Try again shortly.")
     except anthropic.APIError as e:
