@@ -101,8 +101,10 @@ def main() -> None:
     if done:
         print(f"Resuming: {len(done)} questions already done")
     run_at = datetime.now(UTC)
-    # Groups this run's traces together in Langfuse's "Sessions" view.
-    session_id = f"{args.config}-{run_at:%Y%m%d-%H%M%S}"
+    # Groups this run's traces together in Langfuse's "Sessions" view. A resumed run
+    # keeps the original session, so it still shows up as one run.
+    session_id = rows[0].get("session_id") if rows else None
+    session_id = session_id or f"{args.config}-{run_at:%Y%m%d-%H%M%S}"
 
     with connect() as conn:
         for i, q in enumerate(questions, 1):
@@ -154,6 +156,7 @@ def main() -> None:
                 "trace": a.extra.get("trace", []),
                 "timings": a.extra.get("timings", []),
                 "trace_id": trace_id,
+                "session_id": session_id,
                 "latency_s": round(latency, 2),
                 "answer_cost_usd": cost_usd(
                     a.model,

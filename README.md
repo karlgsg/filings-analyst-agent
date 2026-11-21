@@ -10,11 +10,41 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 2 in progress — hybrid search, reranking, the tool-calling agent and tracing are done; the full 150-question run is next. See [PLAN.md](PLAN.md).
+> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** Next: API + UI (Phase 3). See [PLAN.md](PLAN.md).
 
 ## Results
 
-Accuracy on a fixed 30-question FinanceBench subset (same questions for every row):
+### Full benchmark: all 150 FinanceBench questions
+
+The final agent over all 84 filings (32 companies, 20,474 chunks), with three answering models. The judge is Haiku 5.5 in every run, so grading is identical.
+
+| Answering model | Accuracy | Retrieval hit rate | Cost / question | p50 latency | Avg steps |
+|---|---|---|---|---|---|
+| **Claude Haiku 5.5** | **82.7%** | 88.0% | **$0.0020** | 5.0 s | 2.7 |
+| Claude Sonnet 5.5 | 83.3% | 85.3% | $0.0258 | 5.3 s | 2.5 |
+| Claude Opus 5.5 | 86.7% | 90.0% | $0.0634 | 8.0 s | 2.9 |
+
+**A bigger model buys little here.** Sonnet costs 13× more than Haiku for one extra question. Opus costs 31× more for six, and that gap isn't statistically solid: Opus fixed 11 of Haiku's misses but missed 5 that Haiku got (McNemar p ≈ 0.21). The default stays Haiku. Full per-question results: [evals/results/](evals/results/).
+
+| FinanceBench question type (50 each) | Haiku | Sonnet | Opus |
+|---|---|---|---|
+| metrics-generated (compute a ratio from the statements) | 98% | 96% | 96% |
+| domain-relevant (analyst judgement, e.g. "is it capital-intensive?") | 80% | 76% | 86% |
+| novel-generated (free-form questions about one filing) | 70% | 78% | 78% |
+
+**What's left is mostly not the model.** The calculation questions are essentially solved. 13 questions were missed by *all three* models, and they usually agree with each other against the answer key:
+- **6 are definitional.** The key uses a specific formula (e.g. quick ratio 0.96 vs 0.85 from cash + securities + receivables, or "operating" working capital $831M vs reported $2,278M), or it makes a judgement call the models read the other way.
+- **2 don't name a company** ("Were there any board nominees with many votes against?"). FinanceBench assumes you're handed one filing; this agent searches all 84 at once (see *Design decisions*).
+- **3 have a debatable answer key.** Boeing's FY2021 tax rate has the opposite sign, and the Upjohn spin-off was already complete by the Q2 2023 filing.
+- **About 2 are genuine misses**, e.g. PepsiCo restructuring costs live in the notes, not as an income-statement line.
+
+Of Haiku's 26 misses, the gold page *was* retrieved for 21, so retrieval is no longer the bottleneck it was in the baseline.
+
+**A crash, and recovering from it.** The Sonnet and Opus runs stopped partway when API credits ran out. The eval only saved results at the end, so those answers would have been lost, but every one was already in Langfuse. I rebuilt the 119 finished rows from the traces (all of them matched the run logs exactly) and resumed each run in its original session. The eval now checkpoints each row as it's scored (`--resume`), so a crash costs nothing.
+
+### Development: what each component added
+
+Built on a fixed 30-question subset (top-10 companies; same questions for every row):
 
 | Config | Accuracy | Retrieval hit rate | Cost / question | p50 latency |
 |---|---|---|---|---|
@@ -30,7 +60,7 @@ Accuracy on a fixed 30-question FinanceBench subset (same questions for every ro
 
 **Tracing (Langfuse).** Every question is a trace: each Claude call is a generation (tokens, cost, latency), each search/calculation a timed span, and the eval's verdict is attached as a score, so the dashboard can be filtered straight to wrong answers. Third-party SDK spans are filtered out to avoid double-counting cost. Where the time goes, per question: **Claude calls 4.8 s, search 0.9 s** (incl. the local reranker), calculator ~0 s — so speeding the agent up means fewer or cheaper model steps, not faster retrieval.
 
-**Grading noise.** Re-running the agent unchanged moved accuracy from 83.3% to 73.3%. Comparing the runs question by question, *none* of the flips came from the agent: two were the LLM judge ruling differently on near-identical answers, and one was a scorer bug (a correct answer that mentioned "I could not find any FY2021 acquisitions" in its last sentence was auto-failed as "not found"). The bug is fixed and both affected saved results were re-scored (rerank unchanged, agent → 76.7%). With 30 questions, one question is 3.3 points — differences under ~10 points are within noise, which is why the next step is the full 150-question run.
+**Grading noise.** Re-running the agent unchanged moved accuracy from 83.3% to 73.3%. Comparing the runs question by question, *none* of the flips came from the agent: two were the LLM judge ruling differently on near-identical answers, and one was a scorer bug (a correct answer that mentioned "I could not find any FY2021 acquisitions" in its last sentence was auto-failed as "not found"). The bug is fixed and both affected saved results were re-scored (rerank unchanged, agent → 76.7%). With 30 questions, one question is 3.3 points — differences under ~10 points are within noise, which is why the headline number comes from the full 150-question run above. The numeric check also now skips years and dates ("In FY2022, …" used to be read as the number 2022), so a third of answers are graded in code instead of by the judge, which is free and deterministic.
 
 **Agent: 33% → 77–83%.** Replacing "retrieve once, then answer" with a tool-calling loop was the big win. The model searches as many times as it needs (avg 2.6 steps, max 6) with company/year filters, does all arithmetic in a safe `calculate` tool, and submits a structured `final_answer` with citations. "Couldn't find it" answers dropped from 12 to 0, and the multi-statement questions (EBITDA, multi-year averages) are now answered correctly. Cost doubled to ~$0.002/question; prompt caching keeps it there (most of each step's input is re-sent conversation, billed at 10%). All 30 judge verdicts were hand-reviewed: 28 agreed, one lenient and one harsh call, net zero.
 
@@ -75,15 +105,17 @@ cp .env.example .env                              # add your ANTHROPIC_API_KEY
 docker compose up -d                              # Postgres + pgvector
 uv sync                                           # Python deps
 
-uv run python -m analyst.ingest.financebench      # download questions + PDFs (~50 MB)
-uv run python -m analyst.ingest.index             # chunk, embed, store (~7k chunks)
+uv run python -m analyst.ingest.financebench      # questions + PDFs for the top-10 companies (~50 MB)
+uv run python -m analyst.ingest.financebench --top 32   # ...or all 84 filings (~160 MB)
+uv run python -m analyst.ingest.index             # chunk, embed, store (~7k / ~20k chunks)
 
 uv run python -m analyst.agent.baseline "What was Boeing's revenue in FY2022?"
 uv run python evals/run_eval.py --config baseline # run the 30-question eval (~$0.03)
+uv run python evals/run_eval.py --config agent --retriever agent --full   # all 150 (~$0.30 on Haiku)
 uv run pytest
 ```
 
-Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_eval.py --config baseline-sonnet`
+Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_eval.py --config baseline-sonnet`. If a run is interrupted, re-run the same command with `--resume`.
 
 ## Design decisions
 
@@ -91,6 +123,7 @@ Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_e
 - **Search across all filings, no company filter.** Harder than searching only the right document, but closer to how a real user asks questions — and the number we report is the honest one.
 - **Fixed, committed eval set** (seed 42) so every configuration is compared on identical questions.
 - **Free checks first:** numeric answers and "not found" responses are scored in code; only the rest pay for an LLM judge.
+- **Haiku as the default model.** On the full benchmark it's within 4 points of Opus at 1/31 of the cost; the model is one env var (`ANSWER_MODEL`) if a use case needs the extra accuracy.
 - **Filing text is treated as untrusted input** in the prompt (groundwork for prompt-injection testing).
 
 ## Project layout
