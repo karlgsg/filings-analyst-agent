@@ -1,7 +1,7 @@
 """Score an answer against FinanceBench's gold answer.
 
 1. Numeric check (free): if the gold answer is a number, compare it to the first
-   number in the model's direct answer within a relative tolerance.
+   value in the model's direct answer (skipping years/dates) within a relative tolerance.
 2. LLM judge (cheap): everything else, including numeric near-misses that may
    just be formatting (e.g. "$1.6 billion" vs "$1,616 million").
 """
@@ -60,6 +60,24 @@ def direct_answer(text: str) -> str:
         if para.strip():
             return para.strip()
     return ""
+
+
+# Digits that are labels, not values: dates, fiscal periods, form and company names.
+# Without this, "In FY2022, revenue was $5.2B" would be read as the number 2022.
+NOT_VALUES_RE = re.compile(
+    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}\b"  # June 30
+    r"|\b(?:FY|Q[1-4])\s?'?\d{0,4}\b"  # FY2022, FY'23, Q2
+    r"|'\d{2}\b"  # Jun'23
+    r"|\b\d{1,2}-?[KQ]\b"  # 10-K, 10-Q, 8-K
+    r"|(?<!\$)\b3M\b"  # the company 3M (but not "$3M")
+    r"|(?<![$\d.,])\b(?:19|20)\d{2}\b(?![\d,%]|\.\d)",  # bare years like 2018
+    flags=re.IGNORECASE,
+)
+
+
+def answer_number(text: str) -> float | None:
+    """The first real value in the answer, skipping years, dates and names."""
+    return parse_number(NOT_VALUES_RE.sub(" ", text))
 
 
 def numbers_match(expected: float, got: float, tol: float = TOLERANCE) -> bool:
@@ -132,7 +150,7 @@ def score(question: str, gold: str, answer: str, client: anthropic.Anthropic) ->
         return Score(False, "not_found", "model said the answer wasn't in the filings")
 
     expected = gold_number(gold)
-    got = parse_number(head)
+    got = answer_number(head)
     if expected is not None and got is not None and numbers_match(expected, got):
         return Score(True, "numeric", f"{got} matches {expected} within {TOLERANCE:.0%}")
 

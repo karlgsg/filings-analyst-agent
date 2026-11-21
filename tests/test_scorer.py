@@ -20,6 +20,20 @@ def test_gold_number_only_for_numeric_answers():
     assert gold_number("Yes, because revenue grew 5% in 2022") is None
 
 
+def test_answer_number_skips_years_dates_and_names():
+    from scorer import answer_number
+
+    assert answer_number("PepsiCo's FY2022 EBITDA less capex is about $9,068 million.") == 9068
+    assert (
+        answer_number("MGM's AP at year-end FY2018 (December 31, 2018) was $302.6 million") == 302.6
+    )
+    assert answer_number("Best Buy's FY2015–FY2017 average net margin is 2.8%.") == 2.8
+    assert answer_number("3M's Q2 2023 quick ratio is about 0.85x") == 0.85
+    assert answer_number("Per its 10-K, Jun'23 revenue was $5M") == 5
+    assert answer_number("Revenue grew 2,022 units") == 2022  # not a year: has a comma
+    assert answer_number("Capex was $2018 million") == 2018  # not a year: has a $
+
+
 def test_numbers_match_tolerance_and_units():
     assert numbers_match(1616.0, 1615.9)
     assert numbers_match(1616.0, 1.616)  # billions vs millions
