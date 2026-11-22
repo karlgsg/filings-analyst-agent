@@ -12,6 +12,7 @@ __pycache__/
 # Data (large; re-downloadable)
 data/financebench/*
 data/raw/*
+data/edgar/
 !data/**/.gitkeep
 
 # OS / editor

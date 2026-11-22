@@ -83,3 +83,16 @@ def test_ask_passes_filters_to_the_agent(client, monkeypatch):
     r = client.post("/ask", json={"question": "Revenue?", "company": "3M", "year": 2018})
     assert r.status_code == 200
     assert calls == [("3M", 2018)]
+
+
+def test_add_company_calls_edgar_ingest(client, monkeypatch):
+    monkeypatch.setattr(main.edgar, "ingest", lambda t, conn: {"ticker": t, "status": "indexed"})
+    r = client.post("/companies", json={"ticker": "NVDA"})
+    assert r.json() == {"ticker": "NVDA", "status": "indexed"}
+
+    def unknown(t, conn):
+        raise main.edgar.EdgarError("Unknown ticker: ZZZZ")
+
+    monkeypatch.setattr(main.edgar, "ingest", unknown)
+    assert client.post("/companies", json={"ticker": "ZZZZ"}).status_code == 400
+    assert client.post("/companies", json={"ticker": "rm -rf /"}).status_code == 422

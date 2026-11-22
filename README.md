@@ -10,7 +10,7 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** Next: API + UI (Phase 3). See [PLAN.md](PLAN.md).
+> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** API, chat UI, and live SEC EDGAR ingestion are built; next: CI + deploy. See [PLAN.md](PLAN.md).
 
 ## Results
 
@@ -93,7 +93,8 @@ Agent:     question → Claude ─┬─ search_filings(query, company, year)   
 | LLM | Claude via the official `anthropic` SDK (no LangChain) — Haiku 5.5 by default, model is a config switch |
 | Embeddings | `BAAI/bge-small-en-v1.5`, run locally (free) |
 | Database | Postgres 17 + pgvector (Docker) — vectors and full-text search in one place |
-| API | FastAPI (`POST /ask`, `GET /companies`, `GET /health`; auto-generated docs at `/docs`) |
+| API | FastAPI (`POST /ask`, `GET`/`POST /companies`, `GET /health`; auto-generated docs at `/docs`) |
+| Live filings | SEC EDGAR: fetch any company's latest 10-K by ticker (HTML parsed with the standard library) |
 | UI | Streamlit chat: expandable citations with the source passage, company/year filter, reasoning-steps toggle |
 | Tracing | Langfuse (optional — disabled when keys aren't set) |
 | Tooling | Python 3.12, `uv`, `pytest`, `ruff` |
@@ -110,6 +111,7 @@ uv sync                                           # Python deps
 uv run python -m analyst.ingest.financebench      # questions + PDFs for the top-10 companies (~50 MB)
 uv run python -m analyst.ingest.financebench --top 32   # ...or all 84 filings (~160 MB)
 uv run python -m analyst.ingest.index             # chunk, embed, store (~7k / ~20k chunks)
+uv run python -m analyst.ingest.edgar NVDA        # add any company's latest 10-K from SEC (needs SEC_USER_AGENT)
 
 uv run python -m analyst.agent.loop "What was Boeing's revenue in FY2022?"   # the agent, from the CLI
 uv run uvicorn analyst.api.main:app --reload     # the API: docs at http://127.0.0.1:8000/docs
@@ -139,17 +141,19 @@ Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_e
 - **Haiku as the default model.** On the full benchmark it's within 4 points of Opus at 1/31 of the cost; the model is one env var (`ANSWER_MODEL`) if a use case needs the extra accuracy.
 - **UI → API → agent.** The Streamlit app only calls the HTTP API, so it deploys separately and anything else can use the same API. Trade-off: two processes to run locally.
 - **UI filters are enforced, not suggested.** Picking a company/year overrides the filter on every search the agent makes (and tells the model the scope), rather than hoping the model follows an instruction.
+- **EDGAR filings are split on the filer's own page breaks.** 10-Ks on EDGAR are HTML, not PDF, but filers mark printed pages with CSS `page-break` styles, so citations still match the page numbers printed in the filing (falls back to 600-word pages if none are marked). Parsed with the stdlib `HTMLParser` rather than a new dependency; the hidden inline-XBRL block is skipped. Trade-off: tables become space-separated rows, not structured data.
+- **Benchmark numbers are for the FinanceBench corpus only.** Companies added from EDGAR are searchable but aren't in the eval set.
 - **Filing text is treated as untrusted input** in the prompt (groundwork for prompt-injection testing).
 
 ## Project layout
 
 ```
 src/analyst/
-  ingest/      download FinanceBench, PDF → chunks, index into Postgres
+  ingest/      download FinanceBench, PDF → chunks, index into Postgres; fetch 10-Ks from SEC EDGAR
   db/          schema + database access
   retrieval/   vector, keyword (IDF-weighted), hybrid (RRF), cross-encoder rerank
   agent/       prompts, baseline answerer, tool-calling loop, tools, safe calculator
-  api/         FastAPI app: POST /ask, GET /companies, GET /health
+  api/         FastAPI app: POST /ask, GET + POST /companies, GET /health
   ui/          Streamlit chat UI (talks to the API over HTTP)
 evals/         eval set, scorer, runner, committed results
 tests/         unit tests
@@ -157,4 +161,4 @@ tests/         unit tests
 
 ## Data & credits
 
-Questions, gold answers, and filings come from **FinanceBench** by Patronus AI ([paper](https://arxiv.org/abs/2311.11944), [repo](https://github.com/patronus-ai/financebench)), licensed CC BY-NC 4.0. This project uses the open-source 150-question set; currently 10 companies (81 questions, 33 filings) are indexed.
+Questions, gold answers, and filings come from **FinanceBench** by Patronus AI ([paper](https://arxiv.org/abs/2311.11944), [repo](https://github.com/patronus-ai/financebench)), licensed CC BY-NC 4.0. This project uses the open-source 150-question set; the default ingest indexes the top 10 companies (81 questions, 33 filings), `--top 32` all of them. Live filings come from [SEC EDGAR](https://www.sec.gov/edgar) (public domain).

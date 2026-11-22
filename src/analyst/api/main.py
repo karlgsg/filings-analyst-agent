@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 import anthropic
+import httpx
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -20,6 +21,7 @@ from analyst import tracing
 from analyst.agent.loop import run_agent
 from analyst.config import cost_usd
 from analyst.db.store import connect
+from analyst.ingest import edgar
 
 # ---- request / response shapes (FastAPI validates JSON against these) ----
 
@@ -33,6 +35,10 @@ class AskRequest(BaseModel):
 class Company(BaseModel):
     company: str
     years: list[int]
+
+
+class AddCompanyRequest(BaseModel):
+    ticker: str = Field(min_length=1, max_length=10, pattern=r"^[A-Za-z.\-]+$", examples=["NVDA"])
 
 
 class Source(BaseModel):
@@ -110,6 +116,17 @@ def companies(conn: Conn) -> list[Company]:
         "GROUP BY company ORDER BY company"
     ).fetchall()
     return [Company(company=c, years=y) for c, y in rows]
+
+
+@app.post("/companies")
+def add_company(req: AddCompanyRequest, conn: Conn) -> dict:
+    """Fetch the company's latest 10-K from SEC EDGAR and index it (~10-60 s)."""
+    try:
+        return edgar.ingest(req.ticker, conn=conn)
+    except edgar.EdgarError as e:
+        raise HTTPException(400, str(e))
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"SEC EDGAR request failed: {e.__class__.__name__}")
 
 
 @app.get("/health")

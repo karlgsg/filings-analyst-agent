@@ -83,6 +83,27 @@ year = None if year_choice == "Any" else year_choice
 show_steps = st.sidebar.toggle("Show reasoning steps", value=False)
 st.sidebar.caption(f"{len(companies)} companies indexed. Answers cite the exact filing page.")
 
+st.sidebar.header("Add a company")
+with st.sidebar.form("add_company", clear_on_submit=True):
+    ticker = st.text_input("Ticker", placeholder="e.g. NVDA")
+    if st.form_submit_button("Fetch latest 10-K from SEC") and ticker:
+        with st.spinner(f"Downloading and indexing {ticker.upper()}'s 10-K..."):
+            try:
+                r = httpx.post(f"{API_URL}/companies", json={"ticker": ticker}, timeout=300)
+                info = r.json()
+                if r.status_code >= 400:
+                    st.session_state.flash = ("error", str(info.get("detail", r.text)))
+                else:
+                    msg = f"{info['company']} FY{info['year']} 10-K: {info['status']}"
+                    st.session_state.flash = ("success", msg)
+                    load_companies.clear()  # refresh the company dropdown
+            except httpx.HTTPError as e:
+                st.session_state.flash = ("error", f"Request failed: {e}")
+        st.rerun()
+if "flash" in st.session_state:
+    kind, msg = st.session_state.pop("flash")
+    getattr(st.sidebar, kind)(msg)
+
 # ---- main: chat ----
 
 st.title("📄 Filings Analyst")
