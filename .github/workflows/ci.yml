@@ -17,7 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: astral-sh/setup-uv@v10 # installs uv; uv installs Python from .python-version
+      # Exact version: setup-uv publishes no moving "v10" tag. Installs uv, which then
+      # installs Python from .python-version.
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true # reuse downloaded packages between runs
 
