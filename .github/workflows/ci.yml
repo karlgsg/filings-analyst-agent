@@ -1,0 +1,33 @@
+# Runs on every push to main and every pull request: lint + unit tests.
+# Free: no API key, no database, no model downloads (unit tests mock all of those).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read # this workflow only reads the repo
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10 # installs uv; uv installs Python from .python-version
+        with:
+          enable-cache: true # reuse downloaded packages between runs
+
+      - name: Install dependencies (exactly as locked)
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Unit tests
+        run: uv run pytest -q

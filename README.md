@@ -1,5 +1,7 @@
 # Filings Analyst Agent
 
+[![CI](https://github.com/karlgsg/filings-analyst-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/karlgsg/filings-analyst-agent/actions/workflows/ci.yml)
+
 An AI analyst that answers questions about public-company filings (10-Ks, 10-Qs, 8-Ks, earnings releases) with **page-level citations**, and is **measured** against the [FinanceBench](https://github.com/patronus-ai/financebench) benchmark rather than judged by eye.
 
 ```
@@ -10,7 +12,7 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** API, chat UI, and live SEC EDGAR ingestion are built; next: CI + deploy. See [PLAN.md](PLAN.md).
+> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** API, chat UI, and live SEC EDGAR ingestion are built; next: deploy. See [PLAN.md](PLAN.md).
 
 ## Results
 
@@ -97,7 +99,7 @@ Agent:     question → Claude ─┬─ search_filings(query, company, year)   
 | Live filings | SEC EDGAR: fetch any company's latest 10-K by ticker (HTML parsed with the standard library) |
 | UI | Streamlit chat: expandable citations with the source passage, company/year filter, reasoning-steps toggle |
 | Tracing | Langfuse (optional — disabled when keys aren't set) |
-| Tooling | Python 3.12, `uv`, `pytest`, `ruff` |
+| Tooling | Python 3.12, `uv`, `pytest`, `ruff`; GitHub Actions runs lint + tests on every push |
 
 ## Run it locally
 
@@ -143,6 +145,7 @@ Switch models per run: `ANSWER_MODEL=claude-sonnet-5-5 uv run python evals/run_e
 - **UI filters are enforced, not suggested.** Picking a company/year overrides the filter on every search the agent makes (and tells the model the scope), rather than hoping the model follows an instruction.
 - **EDGAR filings are split on the filer's own page breaks.** 10-Ks on EDGAR are HTML, not PDF, but filers mark printed pages with CSS `page-break` styles, so citations still match the page numbers printed in the filing (falls back to 600-word pages if none are marked). Parsed with the stdlib `HTMLParser` rather than a new dependency; the hidden inline-XBRL block is skipped. Trade-off: tables become space-separated rows, not structured data.
 - **Benchmark numbers are for the FinanceBench corpus only.** Companies added from EDGAR are searchable but aren't in the eval set.
+- **CPU-only PyTorch on Linux.** The embedding and reranker models are small and run fine on CPU; the default Linux PyTorch build pulls ~3 GB of GPU libraries that CI and the deploy server would never use.
 - **Filing text is treated as untrusted input** in the prompt (groundwork for prompt-injection testing).
 
 ## Project layout

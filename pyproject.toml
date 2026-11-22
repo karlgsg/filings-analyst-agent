@@ -15,6 +15,7 @@ dependencies = [
     "python-dotenv>=1.0",
     "sentence-transformers>=6.3.0",
     "streamlit>=1.67.0",
+    "torch>=2.15.0",  # pinned to a CPU-only build on Linux, see [tool.uv.sources]
     "uvicorn>=0.54.0",
 ]
 
@@ -33,3 +34,13 @@ packages = ["src/analyst"]
 
 [tool.ruff]
 line-length = 100
+
+# On Linux (CI, deploy servers) use the CPU-only PyTorch build: the default one pulls
+# ~3 GB of NVIDIA GPU libraries we never use. macOS is unaffected.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
