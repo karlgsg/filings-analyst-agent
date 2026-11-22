@@ -12,7 +12,7 @@ A: $1,615.9 million (trade receivables, net, as of June 30, 2020).
    down from $1,864.3 million a year earlier [AMCOR_2020_10K, p.50].
 ```
 
-> **Status:** Phase 2 done — **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** API, chat UI, and live SEC EDGAR ingestion are built; next: deploy. See [PLAN.md](PLAN.md).
+> **Status:** **82.7% on all 150 FinanceBench questions with Claude Haiku 5.5 at $0.002/question.** Includes an API, a chat UI, live SEC EDGAR ingestion, and CI. Runs locally (see below). See [PLAN.md](PLAN.md).
 
 ## Results
 
